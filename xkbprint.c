@@ -24,7 +24,7 @@
  THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
  ********************************************************/
-/* $XFree86$ */
+/* $XFree86: xc/programs/xkbprint/xkbprint.c,v 3.11 2003/09/24 02:43:38 dawes Exp $ */
 
 #include <stdio.h>
 #include <ctype.h>

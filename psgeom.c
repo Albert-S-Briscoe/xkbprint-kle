@@ -24,7 +24,7 @@
  THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
  ********************************************************/
-/* $XFree86$ */
+/* $XFree86: xc/programs/xkbprint/psgeom.c,v 1.6 2003/04/22 14:01:49 pascal Exp $ */
 
 #define	XK_TECHNICAL
 #define	XK_PUBLISHING
