@@ -27,7 +27,7 @@
  THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
  ********************************************************/
-/* $XFree86: xc/programs/xkbprint/xkbprint.h,v 1.2 2003/11/17 22:20:53 dawes Exp $ */
+/* $XFree86$ */
 
 #define	LABEL_AUTO	-1
 #define	LABEL_NONE	0

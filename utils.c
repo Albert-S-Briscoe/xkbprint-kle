@@ -25,7 +25,7 @@
    * used in advertising or publicity pertaining to distribution of the 
    * software without specific, written prior permission.
   \*/
-/* $XFree86: xc/programs/xkbprint/utils.c,v 3.5 2001/07/25 15:05:25 dawes Exp $ */
+/* $XFree86$ */
 
 #include 	"utils.h"
 #include	<ctype.h>
