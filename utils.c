@@ -25,14 +25,11 @@
    * used in advertising or publicity pertaining to distribution of the 
    * software without specific, written prior permission.
   \*/
+/* $XFree86: xc/programs/xkbprint/utils.c,v 3.5 2001/07/25 15:05:25 dawes Exp $ */
 
 #include 	"utils.h"
 #include	<ctype.h>
-#ifndef X_NOT_STDC_ENV
-#include <stdlib.h>
-#else
-char *malloc();
-#endif
+#include	<stdlib.h>
 
 /***====================================================================***/
 
@@ -102,7 +99,7 @@ uFree(ptr)
 /***                  FUNCTION ENTRY TRACKING                           ***/
 /***====================================================================***/
 
-static	FILE	*entryFile=	stderr;
+static	FILE	*entryFile=	NULL;
 	int	 uEntryLevel;
 
 Boolean
@@ -123,18 +120,18 @@ uSetEntryFile(name)
 }
 
 void
-uEntry(l,s,a1,a2,a3,a4,a5,a6,a7,a8)
-int	l;
-char	*s;
-Opaque	a1,a2,a3,a4,a5,a6,a7,a8;
+uEntry(int l, char *s,...)
 {
 int	i;
+va_list ap;
 
+    va_start(ap, s);
     for (i=0;i<uEntryLevel;i++) {
 	putc(' ',entryFile);
     }
-    fprintf(entryFile,s,a1,a2,a3,a4,a5,a6,a7,a8);
+    vfprintf(entryFile,s,ap);
     uEntryLevel+= l;
+    va_end(ap);
     return;
 }
 
@@ -158,7 +155,7 @@ int	i;
 /***			PRINT FUNCTIONS					***/
 /***====================================================================***/
 
-	FILE	*uDebugFile=		stderr;
+	FILE	*uDebugFile=		NULL;
 	int	 uDebugIndentLevel=	0;
 	int	 uDebugIndentSize=	4;
 
@@ -180,37 +177,39 @@ uSetDebugFile(name)
 }
 
 void
-uDebug(s,a1,a2,a3,a4,a5,a6,a7,a8)
-char *s;
-Opaque a1,a2,a3,a4,a5,a6,a7,a8;
+uDebug(char *s,...)
 {
 int	i;
+va_list ap;
 
+    va_start(ap, s);
     for (i=(uDebugIndentLevel*uDebugIndentSize);i>0;i--) {
 	putc(' ',uDebugFile);
     }
-    fprintf(uDebugFile,s,a1,a2,a3,a4,a5,a6,a7,a8);
+    vfprintf(uDebugFile,s,ap);
     fflush(uDebugFile);
+    va_end(ap);
     return;
 }
 
 void
-uDebugNOI(s,a1,a2,a3,a4,a5,a6,a7,a8)
-char *s;
-Opaque a1,a2,a3,a4,a5,a6,a7,a8;
+uDebugNOI(char *s,...)
 {
-    fprintf(uDebugFile,s,a1,a2,a3,a4,a5,a6,a7,a8);
+va_list ap;
+
+    va_start(ap, s);
+    vfprintf(uDebugFile,s,ap);
     fflush(uDebugFile);
+    va_end(ap);
     return;
 }
 
 /***====================================================================***/
 
-static	FILE	*errorFile=	stderr;
+static	FILE	*errorFile=	NULL;
 
 Boolean
-uSetErrorFile(name)
-    char *name;
+uSetErrorFile(char *name)
 {
     if ((errorFile!=NULL)&&(errorFile!=stderr)) {
 	fprintf(errorFile,"switching to %s\n",name?name:"stderr");
@@ -226,65 +225,75 @@ uSetErrorFile(name)
 }
 
 void
-uInformation(s,a1,a2,a3,a4,a5,a6,a7,a8)
-char *s;
-Opaque a1,a2,a3,a4,a5,a6,a7,a8;
+uInformation(char *s,...)
 {
-    fprintf(errorFile,s,a1,a2,a3,a4,a5,a6,a7,a8);
+    va_list ap;
+
+    va_start(ap, s);
+    vfprintf(errorFile,s,ap);
     fflush(errorFile);
+    va_end(ap);
     return;
 }
 
 /***====================================================================***/
 
 void
-uAction(s,a1,a2,a3,a4,a5,a6,a7,a8)
-char *s;
-Opaque a1,a2,a3,a4,a5,a6,a7,a8;
+uAction(char *s,...)
 {
+    va_list ap;
+
+    va_start(ap, s);
     fprintf(errorFile,"                  ");
-    fprintf(errorFile,s,a1,a2,a3,a4,a5,a6,a7,a8);
+    vfprintf(errorFile,s,ap);
     fflush(errorFile);
+    va_end(ap);
     return;
 }
 
 /***====================================================================***/
 
 void
-uWarning(s,a1,a2,a3,a4,a5,a6,a7,a8)
-char *s;
-Opaque a1,a2,a3,a4,a5,a6,a7,a8;
+uWarning(char *s,...)
 {
+    va_list ap;
+
+    va_start(ap, s);
     fprintf(errorFile,"Warning:          ");
-    fprintf(errorFile,s,a1,a2,a3,a4,a5,a6,a7,a8);
+    vfprintf(errorFile,s,ap);
     fflush(errorFile);
+    va_end(ap);
     return;
 }
 
 /***====================================================================***/
 
 void
-uError(s,a1,a2,a3,a4,a5,a6,a7,a8)
-char *s;
-Opaque a1,a2,a3,a4,a5,a6,a7,a8;
+uError(char *s,...)
 {
+    va_list ap;
+
+    va_start(ap, s);
     fprintf(errorFile,"Error:            ");
-    fprintf(errorFile,s,a1,a2,a3,a4,a5,a6,a7,a8);
+    vfprintf(errorFile,s,ap);
     fflush(errorFile);
+    va_end(ap);
     return;
 }
 
 /***====================================================================***/
 
 void
-uFatalError(s,a1,a2,a3,a4,a5,a6,a7,a8)
-char *s;
-Opaque a1,a2,a3,a4,a5,a6,a7,a8;
+uFatalError(char *s,...)
 {
+    va_list ap;
+
+    va_start(ap, s);
     fprintf(errorFile,"Fatal Error:      ");
-    fprintf(errorFile,s,a1,a2,a3,a4,a5,a6,a7,a8);
+    vfprintf(errorFile,s,ap);
     fprintf(errorFile,"                  Exiting\n");
     fflush(errorFile);
+    va_end(ap);
     exit(1);
     /* NOTREACHED */
 }
@@ -292,13 +301,15 @@ Opaque a1,a2,a3,a4,a5,a6,a7,a8;
 /***====================================================================***/
 
 void
-uInternalError(s,a1,a2,a3,a4,a5,a6,a7,a8)
-char *s;
-Opaque a1,a2,a3,a4,a5,a6,a7,a8;
+uInternalError(char *s,...)
 {
+    va_list ap;
+
+    va_start(ap, s);
     fprintf(errorFile,"Internal error:   ");
-    fprintf(errorFile,s,a1,a2,a3,a4,a5,a6,a7,a8);
+    vfprintf(errorFile,s,ap);
     fflush(errorFile);
+    va_end(ap);
     return;
 }
 

@@ -24,6 +24,7 @@
  THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
  ********************************************************/
+/* $XFree86: xc/programs/xkbprint/psgeom.c,v 1.5 2001/07/25 15:05:25 dawes Exp $ */
 
 #define	XK_TECHNICAL
 #define	XK_PUBLISHING
@@ -37,6 +38,7 @@
 #include <X11/extensions/XKM.h>
 #include <X11/extensions/XKBfile.h>
 #include <X11/keysym.h>
+#include <X11/Xutil.h>
 
 #if defined(sgi)
 #include <malloc.h>
@@ -44,9 +46,7 @@
 
 #define	DEBUG_VAR_NOT_LOCAL
 #define	DEBUG_VAR debugFlags
-#ifndef X_NOT_STDC_ENV
 #include <stdlib.h>
-#endif
 
 #include "utils.h"
 #include "xkbprint.h"
@@ -114,6 +114,7 @@ typedef struct {
 } KeyTop;
 
 #define	DFLT_LABEL_FONT "Helvetica-Narrow-Bold"
+#define DFLT_LABEL_FONT_SIZE 10
 
 /***====================================================================***/
 
@@ -128,10 +129,7 @@ static PSFontDef internalFonts[] = {
 static int nInternalFonts =	(sizeof(internalFonts)/sizeof(PSFontDef));
 
 static void
-ListInternalFonts(out,first,indent)
-    FILE *	out;
-    int		first;
-    int		indent;
+ListInternalFonts(FILE *out, int first, int indent)
 {
 register int i,n,nThisLine;
 
@@ -158,9 +156,7 @@ register int i,n,nThisLine;
 }
 
 static Bool
-PSIncludeFont(out,font)
-    FILE	*out;
-    char	*font;
+PSIncludeFont(FILE *out, char *font)
 {
 char **		pstr;
 register int	i;
@@ -182,10 +178,8 @@ register int	i;
     return False;
 }
 
-extern Bool
-DumpInternalFont(out,fontName)
-    FILE *		out;
-    char *		fontName;
+Bool
+DumpInternalFont(FILE *out, char *fontName)
 {
     if (strcmp(fontName,"IsoKeyCaps")!=0) {
 	uError("No internal font named \"%s\"\n",fontName);
@@ -201,10 +195,7 @@ DumpInternalFont(out,fontName)
 /***====================================================================***/
 
 static void
-PSColorDef(out,state,color)
-    FILE *	out;
-    PSState *	state;
-    XkbColorPtr	color;
+PSColorDef(FILE *out, PSState *state, XkbColorPtr color)
 {
 int	tmp;
 
@@ -243,14 +234,7 @@ int	tmp;
 }
 
 static void
-#if NeedFunctionPrototypes
 PSSetColor(FILE *out,PSState *state,int color)
-#else
-PSSetColor(out,state,color)
-    FILE *	out;
-    PSState *	state;
-    int		color;
-#endif
 {
     if ((state->args->wantColor)&&(state->color!=color)) {
 	fprintf(out,"C%03d %% set color\n",color);
@@ -260,18 +244,14 @@ PSSetColor(out,state,color)
 }
 
 static void
-PSGSave(out,state)
-    FILE *	out;
-    PSState *	state;
+PSGSave(FILE *out, PSState *state)
 {
     fprintf(out,"gsave\n");
     return;
 }
 
 static void
-PSGRestore(out,state)
-    FILE *	out;
-    PSState *	state;
+PSGRestore(FILE *out, PSState *state)
 {
     fprintf(out,"grestore\n");
     state->color= -1;
@@ -281,10 +261,7 @@ PSGRestore(out,state)
 }
 
 static void
-PSShapeDef(out,state,shape)
-    FILE *	out;
-    PSState *	state;
-    XkbShapePtr	shape;
+PSShapeDef(FILE *out, PSState *state, XkbShapePtr shape)
 {
 int		o,p;
 XkbOutlinePtr	ol;
@@ -418,8 +395,7 @@ typedef	struct {
 } FontStuff;
 
 static void
-ClearFontStuff(stuff)
-    FontStuff *	stuff;
+ClearFontStuff(FontStuff *stuff)
 {
     if (stuff && stuff->foundry)
 	uFree(stuff->foundry);
@@ -428,9 +404,7 @@ ClearFontStuff(stuff)
 }
 
 static Bool
-CrackXLFDName(name,stuff)
-    char *	name;
-    FontStuff *	stuff;
+CrackXLFDName(char *name, FontStuff *stuff)
 {
 char *tmp;
     if ((name==NULL)||(stuff==NULL))
@@ -500,13 +474,7 @@ BAILOUT:
 }
 
 static void
-#if NeedFunctionPrototypes
-PSSetUpForLatin1(FILE *out,PSState *state)
-#else
-PSSetUpForLatin1(out,state)
-    FILE *		out;
-    PSState *		state;
-#endif
+PSSetUpForLatin1(FILE *out, PSState *state)
 {
     fprintf(out,"save\n");
     fprintf(out,"/ISOLatin1Encoding where {pop save true}{false} ifelse\n");
@@ -562,9 +530,7 @@ PSSetUpForLatin1(out,state)
 }
 
 static void
-PSReencodeLatin1Font(out,font)
-    FILE	*out;
-    char	*font;
+PSReencodeLatin1Font(FILE *out, char *font)
 {
     fprintf(out,"/%s findfont reencodeISO-1\n",font);
     fprintf(out,"	/%s-8859-1 exch definefont pop\n",font);
@@ -572,9 +538,7 @@ PSReencodeLatin1Font(out,font)
 }
 
 static void
-PSSetUpFonts(out,textFont,size)
-    FILE *	out;
-    char *	textFont;
+PSSetUpFonts(FILE *out, char *textFont, int size)
 {
     fprintf(out,"/F%d { /%s findfont exch scalefont setfont } def\n",
 						FONT_TEXT,textFont);
@@ -588,12 +552,7 @@ PSSetUpFonts(out,textFont,size)
 }
 
 static void
-PSSetFont(out,state,font,size,pts)
-    FILE *	out;
-    PSState *	state;
-    int		font;
-    int		size;
-    int		pts;
+PSSetFont(FILE *out, PSState *state, int font, int size, int pts)
 {
     if ((state->font!=font)||(state->fontSize!=size)) {
 	fprintf(out,"%d %sF%d\n",size,(pts?"pts ":""),font);
@@ -605,9 +564,7 @@ PSSetFont(out,state,font,size,pts)
 
 
 static void
-PSProlog(out,state)
-    FILE *		out;
-    PSState *		state;
+PSProlog(FILE *out, PSState *state)
 {
 register int	i;
 
@@ -717,15 +674,13 @@ register int	i;
     if (state->args->label==LABEL_SYMBOLS) {
 	PSIncludeFont(out,"IsoKeyCaps");
     }
-    PSSetUpFonts(out,DFLT_LABEL_FONT);
+    PSSetUpFonts(out,DFLT_LABEL_FONT, DFLT_LABEL_FONT_SIZE);
     fprintf(out,"%%%%EndProlog\n");
     return;
 }
 
 static void
-PSFileTrailer(out,state)
-    FILE *		out;
-    PSState *		state;
+PSFileTrailer(FILE *out, PSState *state)
 {
     fprintf(out,"restore\n");
     if (!state->args->wantEPS)
@@ -739,9 +694,7 @@ PSFileTrailer(out,state)
 }
 
 static void
-PSPageSetup(out,state,drawBorder)
-    FILE *		out;
-    PSState *		state;
+PSPageSetup(FILE *out, PSState *state, Bool drawBorder)
 {
 XkbGeometryPtr	geom;
 
@@ -811,9 +764,7 @@ XkbGeometryPtr	geom;
 }
 
 static void
-PSPageTrailer(out,state)
-    FILE *	out;
-    PSState *	state;
+PSPageTrailer(FILE *out, PSState *state)
 {
 char *		name;
 XkbDescPtr	xkb;
@@ -942,11 +893,8 @@ int		p,baseline;
     return;
 }
 
-void
-PSDoodad(out,state,doodad)
-    FILE *		out;
-    PSState * 		state;
-    XkbDoodadPtr	doodad;
+static void
+PSDoodad(FILE *out, PSState *state, XkbDoodadPtr doodad)
 {
 XkbDescPtr	xkb;
 char		*name,*dname;
@@ -1052,13 +1000,9 @@ int		sz,leading;
 
 /***====================================================================***/
 
-Bool
-PSKeycapsSymbol(sym,buf,font_rtrn,sz_rtrn,state)
-    KeySym	sym;
-    unsigned char *	buf;
-    int *	font_rtrn;
-    int *	sz_rtrn;
-    PSState *	state;
+static Bool
+PSKeycapsSymbol(KeySym sym, unsigned char *buf, 
+		int *font_rtrn, int *sz_rtrn, PSState *state)
 {
     if (state->args->wantSymbols==NO_SYMBOLS)
 	return False;
@@ -1215,13 +1159,9 @@ PSKeycapsSymbol(sym,buf,font_rtrn,sz_rtrn,state)
     return False;
 }
 
-Bool
-PSNonLatin1Symbol(sym,buf,font_rtrn,sz_rtrn,state)
-    KeySym	sym;
-    unsigned char *	buf;
-    int *	font_rtrn;
-    int *	sz_rtrn;
-    PSState *	state;
+static Bool
+PSNonLatin1Symbol(KeySym sym, unsigned char *buf,
+		  int *font_rtrn, int *sz_rtrn, PSState *state)
 {
     if (state->args->wantSymbols==NO_SYMBOLS)
 	return False;
@@ -1311,9 +1251,7 @@ PSNonLatin1Symbol(sym,buf,font_rtrn,sz_rtrn,state)
 }
 
 static KeySym
-CheckSymbolAlias(sym,state)
-    KeySym	sym;
-    PSState *	state;
+CheckSymbolAlias(KeySym sym, PSState *state)
 {
     if (XkbKSIsKeypad(sym)) {
 	if ((sym>=XK_KP_0)&&(sym<=XK_KP_9))
@@ -1371,12 +1309,8 @@ CheckSymbolAlias(sym,state)
     return sym;
 }
 
-Bool
-FindKeysymsByName(xkb,name,state,top)
-    XkbDescPtr	xkb;
-    char *	name;
-    PSState *	state;
-    KeyTop *	top;
+static Bool
+FindKeysymsByName(XkbDescPtr xkb, char *name, PSState *state, KeyTop *top)
 {
 static unsigned char buf[30];
 int	kc;
@@ -1396,7 +1330,7 @@ int	eG,nG,gI,l,g;
     nG= XkbKeyNumGroups(xkb,kc);
     gI= XkbKeyGroupInfo(xkb,kc);
     if ((state->args->wantDiffs)&&(eG>=XkbKeyNumGroups(xkb,kc)))
-	return;
+	return False;		/* XXX was a return with no value */
     if (nG==0) {
 	return False;
     }
@@ -1439,7 +1373,7 @@ int	eG,nG,gI,l,g;
 		if (sym=='(')		sprintf((char *)buf,"\\(");
 		else if (sym==')')	sprintf((char *)buf,"\\)");
 		else if (sym=='\\')	sprintf((char *)buf,"\\\\");
-		else			sprintf((char *)buf,"%c",sym);
+		else			sprintf((char *)buf,"%c",(char)sym);
 		top->font[(g*2)+l]= FONT_LATIN1;
 		top->size[(g*2)+l]= SZ_MEDIUM;
 		switch (buf[0]) {
@@ -1461,7 +1395,7 @@ int	eG,nG,gI,l,g;
 		char 		*tmp;
 		tmp= XKeysymToString(sym);
 		if (tmp!=NULL)	strcpy((char *)buf,tmp);
-		else		sprintf((char *)buf,"(%d)",sym);
+		else		sprintf((char *)buf,"(%ld)",sym);
 		top->font[(g*2)+l]= FONT_LATIN1;
 		if (strlen((char *)buf)<9)
 		     top->size[(g*2)+l]= SZ_SMALL;
@@ -1483,12 +1417,8 @@ int	eG,nG,gI,l,g;
     return True;
 }
 
-void
-PSDrawLabel(out,label,x,y,w,h)
-    FILE *		out;
-    char *		label;
-    int			x,y;
-    int			w,h;
+static void
+PSDrawLabel(FILE *out, char *label, int x, int y, int w, int h)
 {
     fprintf(out,"%d %d (%s) centeroffset\n",w,h,label);
     fprintf(out,"%d add exch\n",y); 
@@ -1505,13 +1435,9 @@ PSDrawLabel(out,label,x,y,w,h)
 #define	RIGHT_COL	1
 #define	CENTER_COL	2
 
-PSLabelKey(out,state,top,x,y,bounds,kc,btm)
-    FILE *		out;
-    PSState *		state;
-    KeyTop *		top;
-    int			x,y;
-    XkbBoundsPtr	bounds;
-    int			kc,btm;
+static void
+PSLabelKey(FILE *out, PSState *state, KeyTop *top, int x, int y,
+	   XkbBoundsPtr bounds, int kc, int btm)
 {
 char	keycode[10];
 int	w,h,i;
@@ -1640,11 +1566,8 @@ int	sym_col[NLABELS];
     return;
 }
 
-void
-PSSection(out,state,section)
-    FILE *		out;
-    PSState *		state;
-    XkbSectionPtr	section;
+static void
+PSSection(FILE *out, PSState *state, XkbSectionPtr section)
 {
 int		r,offset;
 XkbRowPtr	row;
@@ -1803,10 +1726,7 @@ XkbDescPtr	xkb;
 }
 
 Bool
-GeometryToPostScript(out,pResult,args)
-    FILE *		out;
-    XkbFileInfo	*	pResult;
-    XKBPrintArgs *	args;
+GeometryToPostScript(FILE *out, XkbFileInfo *pResult, XKBPrintArgs *args)
 {
 XkbDrawablePtr	first,draw;
 PSState		state;

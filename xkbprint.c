@@ -24,6 +24,7 @@
  THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
  ********************************************************/
+/* $XFree86: xc/programs/xkbprint/xkbprint.c,v 3.9 2001/07/25 15:05:25 dawes Exp $ */
 
 #include <stdio.h>
 #include <ctype.h>
@@ -42,9 +43,7 @@
 
 #define	DEBUG_VAR_NOT_LOCAL
 #define	DEBUG_VAR debugFlags
-#ifndef X_NOT_STDC_ENV
 #include <stdlib.h>
-#endif
 
 #include "utils.h"
 #include "xkbprint.h"
@@ -60,11 +59,13 @@
 #define	INPUT_XKB	1
 #define	INPUT_XKM	2
 
+#ifdef notyet
 static char *fileTypeExt[] = {
 	"XXX",
 	"xkm",
 	"xkb"
 };
+#endif
 
 static	unsigned	inputFormat= INPUT_UNKNOWN;
 static	unsigned	outputFormat= WANT_DEFAULT;
@@ -83,10 +84,8 @@ static	XKBPrintArgs	args;
 
 /***====================================================================***/
 
-void
-Usage(argc,argv)
-    int 	argc;
-    char *	argv[];
+static void
+Usage(int argc, char *argv[])
 {
     fprintf(stderr,"Usage: %s [options] input-file [ output-file ]\n",argv[0]);
     fprintf(stderr,"Legal options:\n");
@@ -134,10 +133,8 @@ fprintf(stderr,"              be \"all\", \"none\" or \"common\" (default)\n");
 
 /***====================================================================***/
 
-Bool
-parseArgs(argc,argv)
-    int		argc;
-    char *	argv[];
+static Bool
+parseArgs(int argc, char *argv[])
 {
 register int i;
 
@@ -544,10 +541,8 @@ register int i;
     return True;
 }
 
-Display *
-GetDisplay(program,dpyName)
-    char *	program;
-    char *	dpyName;
+static Display *
+GetDisplay(char *program, char *dpyName)
 {
 int	mjr,mnr,error;
 Display	*dpy;
@@ -586,19 +581,22 @@ Display	*dpy;
 
 /***====================================================================***/
 
+#ifdef notyet
 #define MAX_INCLUDE_OPTS	10
 static char	*includeOpt[MAX_INCLUDE_OPTS];
 static int	numIncludeOpts = 0;
+#endif
 
 int
-main(argc,argv)
-    int		argc;
-    char *	argv[];
+main(int argc, char *argv[])
 {
 FILE 	*	file;
 int		ok;
 XkbFileInfo 	result;
 
+    uSetEntryFile(NullString);
+    uSetDebugFile(NullString);
+    uSetErrorFile(NullString);
     if (!parseArgs(argc,argv))
 	exit(1);
 #ifdef DEBUG
@@ -706,7 +704,7 @@ XkbFileInfo 	result;
 	ok= 0;
     }
     if (ok) {
-	FILE *out;
+	FILE *out = NULL;
 	if (setlocale(LC_ALL,(wantLocale))==NULL) {
 	    if (wantLocale!=NULL) {
 		uWarning("Couldn't change to locale %s\n",wantLocale);

@@ -27,6 +27,7 @@
    * used in advertising or publicity pertaining to distribution of the 
    * software without specific, written prior permission.
   \*/
+/* $XFree86: xc/programs/xkbprint/utils.h,v 1.5 2001/07/25 15:05:25 dawes Exp $ */
 
 /***====================================================================***/
 
@@ -34,12 +35,11 @@
 #include	<X11/Xos.h>
 #include	<X11/Xfuncproto.h>
 #include	<X11/Xfuncs.h>
+#include 	<stdarg.h>
+#include	<stddef.h>
 
 _XFUNCPROTOBEGIN
 
-#ifndef	NULL
-#define	NULL	0
-#endif
 
 #ifndef NUL
 #define	NUL	'\0'
@@ -74,12 +74,14 @@ typedef	int		Comparison;
 #define	comparisonText(c)	((c)?((c)<0?"Less":"Greater"):"Equal")
 #endif
 
+#ifdef notyet
 typedef union {
 	int		 i;
 	unsigned	 u;
 	void		*p;
-	void		*(*fp)();
+	void		*(*fp)(); 
 } Union;
+#endif
 
 /***====================================================================***/
 
@@ -128,17 +130,13 @@ extern	void	uFree(
 
 /***====================================================================***/
 
-extern	Boolean	uSetErrorFile(
-#if NeedFunctionPrototypes
-	char *	/* name */
-#endif
-);
-extern	void	uInformation();
-extern	void	uAction();
-extern	void	uWarning();
-extern	void	uError();
-extern	void	uFatalError();
-extern	void	uInternalError();
+extern Boolean uSetErrorFile ( char *name );
+extern void uInformation ( char *s, ...);
+extern void uAction ( char *s, ... );
+extern void uWarning ( char *s, ... );
+extern void uError ( char *s, ... );
+extern void uFatalError(char *s,...);
+extern void uInternalError ( char *s, ... );
 
 /***====================================================================***/
 
@@ -196,8 +194,8 @@ extern
 #endif
 unsigned	int	DEBUG_VAR;
 
-extern	void	uDebug();
-extern	void	uDebugNOI();	/* no indent */
+extern	void	uDebug( char *s, ... );
+extern	void	uDebugNOI( char *s, ... );	/* no indent */
 extern	Boolean	uSetDebugFile(
 #if NeedFunctionPrototypes
     char *name
@@ -241,7 +239,7 @@ extern	Boolean	uSetEntryFile(
     char *name
 #endif
 );
-extern	void	uEntry();
+extern	void	uEntry(int l, char *s, ... );
 extern	void	uExit(
 #if NeedFunctionPrototypes
     int l,char *rtVal
