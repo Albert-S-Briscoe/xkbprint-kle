@@ -21,8 +21,8 @@
 
 bin_PROGRAMS = xkbprint
 
-xkbprint_CFLAGS = $(DEP_CFLAGS)
-xkbprint_LDADD = $(DEP_LIBS)
+xkbprint_CFLAGS = $(XKBPRINT_CFLAGS)
+xkbprint_LDADD = $(XKBPRINT_LIBS)
 
 xkbprint_SOURCES =	\
         isokeys.h \
