@@ -32,6 +32,5 @@ xkbprint_SOURCES =	\
         xkbprint.c \
         xkbprint.h
 
-dist_man_MANS = \
+dist_man1_MANS = \
         xkbprint.man
-
