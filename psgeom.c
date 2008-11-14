@@ -309,7 +309,7 @@ XkbOutlinePtr	ol;
 	    }
 	    else {
 		fprintf(out,"	mark\n");
-		fprintf(out,"	%3d %3d moveto\n",pt[0].x,pt[0].y);
+		fprintf(out,"	%3d %3d moveto\n",pt[0].x + ol->corner_radius,pt[0].y);
 		fprintf(out,"	%3d %3d %3d %3d %3d arcto\n",pt[1].x,pt[0].y,
 							pt[1].x,pt[1].y,
 							ol->corner_radius);
