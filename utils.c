@@ -31,6 +31,9 @@
 #include	<ctype.h>
 #include	<stdlib.h>
 
+unsigned int debugFlags;
+
+
 /***====================================================================***/
 
 Opaque
@@ -90,7 +93,7 @@ uFree(Opaque ptr)
 /***====================================================================***/
 
 static	FILE	*entryFile=	NULL;
-	int	 uEntryLevel;
+static	int	 uEntryLevel;
 
 Boolean
 uSetEntryFile(char *name)

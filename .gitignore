@@ -18,3 +18,7 @@ stamp-h1
 xkbprint
 xkbprint.1
 *~
+*.o
+xkbprint-*.tar.*
+ChangeLog
+tags
