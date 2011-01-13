@@ -6,20 +6,20 @@
 .SH NAME
 xkbprint \- print an XKB keyboard description
 .SH SYNOPSIS
-.B xkbprint 
+.B xkbprint
 [options] source [ output_file ]
 .SH DESCRIPTION
 .PP
 The
 .I xkbprint
-command generates a printable or encapsulated PostScript description of the 
-XKB keyboard description specified by \fIsource\fP.  The \fIsource\fP can be 
-any compiled keymap (.xkm) file that includes a geometry description or an 
-X display specification.  If an \fIoutput_file\fP is specified, xkbprint 
+command generates a printable or encapsulated PostScript description of the
+XKB keyboard description specified by \fIsource\fP.  The \fIsource\fP can be
+any compiled keymap (.xkm) file that includes a geometry description or an
+X display specification.  If an \fIoutput_file\fP is specified, xkbprint
 writes to it.  If no output file is specified, xkbprint creates replaces
 the extension of the source file with \fI.ps\fP or \fI.eps\fP depending
-on the requested format.  If the source is a non-local X display (e.g.:0), 
-xkbprint appends the appropriate prefix to the display specification, 
+on the requested format.  If the source is a non-local X display (e.g.:0),
+xkbprint appends the appropriate prefix to the display specification,
 replacing the colon with a dash.  For a local display, xkprint uses
 server-\fIn\fP where \fIn\fP is the number of the display.
 .SH OPTIONS
@@ -83,7 +83,7 @@ Print \fInum\fP copies.
 Print the symbols in \fInum\fP keyboard groups.
 .TP 8
 .B \-npk\ \fInum\fP
-Number of keyboard images to print on each page; for EPS files, this 
+Number of keyboard images to print on each page; for EPS files, this
 specifies the total number of keyboard images to print.
 .TP 8
 .B \-o\ \fIfile\fP
@@ -94,7 +94,7 @@ Use \fIdirectory\fP as the root directory; all path names are interpreted
 relative to \fIdirectory\fP.
 .TP 8
 .B -pict \fIwhich\fP
-Controls use of pictographs instead of keysym names where available. 
+Controls use of pictographs instead of keysym names where available.
 \fIwhich\fP can be any of \fIall\fP, \fInone\fP, or \fIcommon\fP(default).
 .TP 8
 .B -synch
