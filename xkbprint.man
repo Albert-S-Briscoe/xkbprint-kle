@@ -103,7 +103,7 @@ Forces synchronization for X requests.
 .B -w\ \fIlevel\fP
 Sets warning level (0 for no warning, 10 for all warnings).
 .SH "SEE ALSO"
-X(__miscmansuffix__),xkbcomp(1)
+X(__miscmansuffix__),xkbcomp(__appmansuffix__)
 .SH COPYRIGHT
 Copyright 1995, Silicon Graphics Computer Systems
 Copyright 1995, 1998  The Open Group
