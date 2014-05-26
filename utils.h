@@ -136,15 +136,6 @@ extern char *uStringDup(const char *  /* s1 */);
 
 /***====================================================================***/
 
-#ifdef	ASSERTIONS_ON
-#define	uASSERT(where,why) \
-	{if (!(why)) uFatalError("assertion botched in %s ( why )\n",where);}
-#else
-#define	uASSERT(where,why)
-#endif
-
-/***====================================================================***/
-
 #ifndef DEBUG_VAR
 #define	DEBUG_VAR	debugFlags
 #endif
