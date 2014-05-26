@@ -52,35 +52,6 @@ uCalloc(unsigned n, unsigned size)
 
 /***====================================================================***/
 
-Opaque
-uRealloc(Opaque old, unsigned newSize)
-{
-    if (old == NULL)
-        return ((Opaque) malloc(newSize));
-    else
-        return ((Opaque) realloc((char *) old, newSize));
-}
-
-/***====================================================================***/
-
-Opaque
-uRecalloc(Opaque old, unsigned nOld, unsigned nNew, unsigned itemSize)
-{
-    char *rtrn;
-
-    if (old == NULL)
-        rtrn = (char *) calloc(nNew, itemSize);
-    else {
-        rtrn = (char *) realloc((char *) old, nNew * itemSize);
-        if ((rtrn) && (nNew > nOld)) {
-            bzero(&rtrn[nOld * itemSize], (nNew - nOld) * itemSize);
-        }
-    }
-    return (Opaque) rtrn;
-}
-
-/***====================================================================***/
-
 void
 uFree(Opaque ptr)
 {
