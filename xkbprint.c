@@ -59,13 +59,6 @@
 #define	INPUT_XKB	1
 #define	INPUT_XKM	2
 
-#ifdef notyet
-static char *fileTypeExt[] = {
-    "XXX",
-    "xkm",
-    "xkb"
-};
-#endif
 
 static unsigned         outputFormat = WANT_DEFAULT;
 static char *           wantLocale = "C";
@@ -77,9 +70,6 @@ static char *           inDpyName;
 static char *           outDpyName;
 static Display *        inDpy;
 static Display *        outDpy;
-#ifdef NOTYET
-static Bool             computeDflts = False;
-#endif
 static XKBPrintArgs     args;
 static unsigned         warningLevel = 5;
 static Bool             synch;
@@ -194,9 +184,6 @@ parseArgs(int argc, char *argv[])
         }
 #endif
         else if (strcmp(argv[i], "-dflts") == 0) {
-#ifdef NOTYET
-            computeDflts = True;
-#endif
             uWarning("Compute defaults not implemented yet\n");
         }
         else if (strcmp(argv[i], "-diffs") == 0) {
@@ -225,15 +212,6 @@ parseArgs(int argc, char *argv[])
             else
                 args.grid = tmp;
         }
-#ifdef NOTYET
-        else if (strncmp(argv[i], "-I", 2) == 0) {
-            if (!XkbAddDirectoryToPath(&argv[i][2])) {
-                uAction("Exiting\n");
-                exit(1);
-            }
-            uInternalError("Includes not implemented yet\n");
-        }
-#endif
         else if (strcmp(argv[i], "-if") == 0) {
             if (++i >= argc) {
                 uWarning("Internal Font name not specified\n");
@@ -636,11 +614,6 @@ GetDisplay(char *program, char *dpyName)
 
 /***====================================================================***/
 
-#ifdef notyet
-#define MAX_INCLUDE_OPTS	10
-static char *includeOpt[MAX_INCLUDE_OPTS];
-static int numIncludeOpts = 0;
-#endif
 
 int
 main(int argc, char *argv[])
@@ -751,12 +724,6 @@ main(int argc, char *argv[])
         if (XkbGetGeometry(inDpy, result.xkb) != Success) {
             uFatalError("Cannot load geometry for %s\n", inDpyName);
         }
-#ifdef NOTYET
-        if (computeDflts)
-            ok = (ComputeKbdDefaults(result.xkb) == Success);
-        else
-            ok = True;
-#endif
         if (args.label == LABEL_AUTO)
             args.label = LABEL_SYMBOLS;
     }

@@ -727,10 +727,6 @@ PSFileTrailer(FILE *out, PSState *state)
     if (!state->args->wantEPS)
         fprintf(out, "%%%%Trailer\n");
     fprintf(out, "%%%%EOF\n");
-#ifdef NOTYET
-    fprintf(out, "%%%%BoundingBox %d %d\n");
-    fprintf(out, "%%%%DocumentFonts: \n");
-#endif
     return;
 }
 
@@ -1267,36 +1263,6 @@ PSKeycapsSymbol(KeySym sym, unsigned char *buf,
         buf[0] = XKC_ISO_Prev_Group_Lock;
         return True;
     }
-#ifdef NOTYET
-    if (font_rtrn != NULL)
-        font_rtrn = FONT_MOUSECAPS;
-    switch (sym) {
-    case XK_Pointer_Up:
-        buf[0] = XKC_Mouse_Pointer_Up;
-        return True;
-    case XK_Pointer_Down:
-        buf[0] = XKC_Mouse_Pointer_Down;
-        return True;
-    case XK_Pointer_Left:
-        buf[0] = XKC_Mouse_Pointer_Left;
-        return True;
-    case XK_Pointer_Right:
-        buf[0] = XKC_Mouse_Pointer_Right;
-        return True;
-    case XK_Pointer_Button1:
-        buf[0] = XKC_Mouse_Pointer_Button1;
-        return True;
-    case XK_Pointer_Button2:
-        buf[0] = XKC_Mouse_Pointer_Button2;
-        return True;
-    case XK_Pointer_Button3:
-        buf[0] = XKC_Mouse_Pointer_Button3;
-        return True;
-    case XK_Pointer_Button4:
-        buf[0] = XKC_Mouse_Pointer_Button4;
-        return True;
-    }
-#endif
     return False;
 }
 
