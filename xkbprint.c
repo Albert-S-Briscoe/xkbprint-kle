@@ -41,8 +41,6 @@
 #include <malloc.h>
 #endif
 
-#define	DEBUG_VAR_NOT_LOCAL
-#define	DEBUG_VAR debugFlags
 #include <stdlib.h>
 
 #include "utils.h"
@@ -622,8 +620,6 @@ main(int argc, char *argv[])
     int ok;
     XkbFileInfo result;
 
-    uSetEntryFile(NullString);
-    uSetDebugFile(NullString);
     uSetErrorFile(NullString);
     if (!parseArgs(argc, argv))
         exit(1);
