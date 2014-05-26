@@ -83,13 +83,6 @@ extern void uFree(Opaque         /* ptr */);
 
 #define	uTypedAlloc(t)		((t *)uAlloc((unsigned)sizeof(t)))
 #define	uTypedCalloc(n,t)	((t *)uCalloc((unsigned)n,(unsigned)sizeof(t)))
-#if (defined mdHasAlloca) && (mdHasAlloca)
-#define	uTmpAlloc(n)	((Opaque)alloca((unsigned)n))
-#define	uTmpFree(p)
-#else
-#define	uTmpAlloc(n)	uAlloc(n)
-#define	uTmpFree(p)	uFree(p)
-#endif
 
 /***====================================================================***/
 
