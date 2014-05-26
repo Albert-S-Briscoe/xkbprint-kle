@@ -396,7 +396,7 @@ static void
 ClearFontStuff(FontStuff *stuff)
 {
     if (stuff && stuff->foundry)
-        uFree(stuff->foundry);
+        free(stuff->foundry);
     bzero(stuff, sizeof(FontStuff));
     return;
 }

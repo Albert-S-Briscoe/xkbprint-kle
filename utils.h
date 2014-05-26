@@ -79,7 +79,6 @@ typedef int Comparison;
 extern Opaque uAlloc(unsigned    /* size */);
 extern Opaque uCalloc(unsigned   /* n */ ,
                       unsigned   /* size */);
-extern void uFree(Opaque         /* ptr */);
 
 #define	uTypedAlloc(t)		((t *)uAlloc((unsigned)sizeof(t)))
 #define	uTypedCalloc(n,t)	((t *)uCalloc((unsigned)n,(unsigned)sizeof(t)))

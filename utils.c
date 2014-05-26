@@ -50,16 +50,6 @@ uCalloc(unsigned n, unsigned size)
     return ((Opaque) calloc(n, size));
 }
 
-/***====================================================================***/
-
-void
-uFree(Opaque ptr)
-{
-    if (ptr != (Opaque) NULL)
-        free((char *) ptr);
-    return;
-}
-
 
 /***====================================================================***/
 
