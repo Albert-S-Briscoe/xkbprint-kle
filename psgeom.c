@@ -119,8 +119,8 @@ typedef struct {
 /***====================================================================***/
 
 typedef struct _PSFontDef {
-    char *name;
-    char **def;
+    const char *name;
+    const char **def;
 } PSFontDef;
 
 static PSFontDef internalFonts[] = {
@@ -157,9 +157,9 @@ ListInternalFonts(FILE *out, int first, int indent)
 }
 
 static Bool
-PSIncludeFont(FILE *out, char *font)
+PSIncludeFont(FILE *out, const char *font)
 {
-    char **pstr;
+    const char **pstr;
     register int i;
 
     pstr = NULL;
@@ -180,7 +180,7 @@ PSIncludeFont(FILE *out, char *font)
 }
 
 Bool
-DumpInternalFont(FILE *out, char *fontName)
+DumpInternalFont(FILE *out, const char *fontName)
 {
     if (strcmp(fontName, "IsoKeyCaps") != 0) {
         uError("No internal font named \"%s\"\n", fontName);
@@ -404,7 +404,7 @@ ClearFontStuff(FontStuff *stuff)
 }
 
 static Bool
-CrackXLFDName(char *name, FontStuff *stuff)
+CrackXLFDName(const char *name, FontStuff *stuff)
 {
     char *tmp;
 
@@ -569,7 +569,7 @@ PSSetUpForLatin1(FILE *out, PSState *state)
 }
 
 static void
-PSReencodeLatin1Font(FILE *out, char *font)
+PSReencodeLatin1Font(FILE *out, const char *font)
 {
     fprintf(out, "/%s findfont reencodeISO-1\n", font);
     fprintf(out, "	/%s-8859-1 exch definefont pop\n", font);
@@ -577,7 +577,7 @@ PSReencodeLatin1Font(FILE *out, char *font)
 }
 
 static void
-PSSetUpFonts(FILE *out, char *textFont, int size)
+PSSetUpFonts(FILE *out, const char *textFont, int size)
 {
     fprintf(out, "/F%d { /%s findfont exch scalefont setfont } def\n",
             FONT_TEXT, textFont);
@@ -845,7 +845,8 @@ PSPageTrailer(FILE *out, PSState *state)
             PSSetFont(out, state, FONT_LATIN1, 14, False);
         }
         if (state->args->label == LABEL_SYMBOLS) {
-            char buf[40], *sName = NULL, *lbuf;
+            char buf[40], *lbuf;
+            const char *sName = NULL;
             Atom sAtom;
 
             if (state->args->nLabelGroups == 1)
@@ -892,7 +893,8 @@ PSPageTrailer(FILE *out, PSState *state)
             baseline += 16;
         }
         if (state->args->label == LABEL_KEYCODE) {
-            char *sName = NULL, *lbuf;
+            const char *sName = NULL;
+            char *lbuf;
             Atom sAtom;
 
             if (xkb->names != NULL)
@@ -959,7 +961,7 @@ static void
 PSDoodad(FILE *out, PSState *state, XkbDoodadPtr doodad)
 {
     XkbDescPtr xkb;
-    char *name, *dname;
+    const char *name, *dname;
     int sz, leading;
 
     xkb = state->xkb;
@@ -1728,7 +1730,7 @@ FindKeysymsByName(XkbDescPtr xkb, char *name, PSState *state, KeyTop *top)
 }
 
 static void
-PSDrawLabel(FILE *out, char *label, int x, int y, int w, int h)
+PSDrawLabel(FILE *out, const char *label, int x, int y, int w, int h)
 {
     fprintf(out, "%d %d (%s) centeroffset\n", w, h, label);
     fprintf(out, "%d add exch\n", y);

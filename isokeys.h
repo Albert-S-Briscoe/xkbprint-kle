@@ -93,7 +93,7 @@
 #define	XKC_ISO_Last_Group			'y'
 #define	XKC_ISO_Last_Group_Lock			'z'
 
-static char *IsoKeyCaps[] = {
+static const char *IsoKeyCaps[] = {
     "%!PS-AdobeFont-1.0: IsoKeyCaps",
     "%%CreationDate: Sun Apr 16 22:14:26 1995",
     "%%VMusage: 8064 8064",

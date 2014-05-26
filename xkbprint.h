@@ -59,8 +59,8 @@ typedef struct _XKBPrintArgs {
 
 extern Bool
 DumpInternalFont(
-    FILE *      /* out */ ,
-    char *      /* fontName */
+    FILE *       /* out */ ,
+    const char * /* fontName */
 );
 
 extern Bool

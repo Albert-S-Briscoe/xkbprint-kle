@@ -61,7 +61,7 @@
 
 
 static unsigned         outputFormat = WANT_DEFAULT;
-static char *           wantLocale = "C";
+static const char *     wantLocale = "C";
 static char *           rootDir;
 static char *           inputFile;
 static char *           outputFile;
@@ -638,7 +638,7 @@ main(int argc, char *argv[])
 /*     XkbInitIncludePath(); */
     if (inputFile != NULL) {
         if (uStringEqual(inputFile, "-")) {
-            static char *in = "stdin";
+            static char in[] = "stdin";
 
             file = stdin;
             inputFile = in;
@@ -750,7 +750,7 @@ main(int argc, char *argv[])
         }
         if (outputFile != NULL) {
             if (uStringEqual(outputFile, "-")) {
-                static char *of = "stdout";
+                static char of[] = "stdout";
 
                 out = stdout;
                 outputFile = of;
