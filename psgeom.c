@@ -515,59 +515,59 @@ CrackXLFDName(const char *name, FontStuff *stuff)
 static void
 PSSetUpForLatin1(FILE *out, PSState *state)
 {
-    fprintf(out, "save\n");
-    fprintf(out, "/ISOLatin1Encoding where {pop save true}{false} ifelse\n");
-    fprintf(out, "/ISOLatin1Encoding [\n");
-    fprintf(out, "   /.notdef /.notdef /.notdef /.notdef /.notdef /.notdef\n");
-    fprintf(out, "   /.notdef /.notdef /.notdef /.notdef /.notdef /.notdef\n");
-    fprintf(out, "   /.notdef /.notdef /.notdef /.notdef /.notdef /.notdef\n");
-    fprintf(out, "   /.notdef /.notdef /.notdef /.notdef /.notdef /.notdef\n");
-    fprintf(out, "   /.notdef /.notdef /.notdef /.notdef /.notdef /.notdef\n");
-    fprintf(out, "   /.notdef /.notdef /space /exclam /quotedbl /numbersign\n");
-    fprintf(out, "   /dollar /percent /ampersand /quoteright /parenleft\n");
-    fprintf(out, "   /parenright /asterisk /plus /comma /minus /period\n");
-    fprintf(out, "   /slash /zero /one /two /three /four /five /six /seven\n");
-    fprintf(out, "   /eight /nine /colon /semicolon /less /equal /greater\n");
-    fprintf(out, "   /question /at /A /B /C /D /E /F /G /H /I /J /K /L /M\n");
-    fprintf(out, "   /N /O /P /Q /R /S /T /U /V /W /X /Y /Z /bracketleft\n");
-    fprintf(out, "   /backslash /bracketright /asciicircum /underscore\n");
-    fprintf(out, "   /quoteleft /a /b /c /d /e /f /g /h /i /j /k /l /m\n");
-    fprintf(out, "   /n /o /p /q /r /s /t /u /v /w /x /y /z /braceleft\n");
-    fprintf(out, "   /bar /braceright /asciitilde /guilsinglright /fraction\n");
-    fprintf(out, "   /florin /quotesingle /quotedblleft /guilsinglleft /fi\n");
-    fprintf(out, "   /fl /endash /dagger /daggerdbl /bullet /quotesinglbase\n");
-    fprintf(out, "   /quotedblbase /quotedblright /ellipsis /trademark\n");
-    fprintf(out, "   /perthousand /grave /scaron /circumflex /Scaron /tilde\n");
-    fprintf(out, "   /breve /zcaron /dotaccent /dotlessi /Zcaron /ring\n");
-    fprintf(out,
-            "   /hungarumlaut /ogonek /caron /emdash /space /exclamdown\n");
-    fprintf(out, "   /cent /sterling /currency /yen /brokenbar /section\n");
-    fprintf(out, "   /dieresis /copyright /ordfeminine /guillemotleft\n");
-    fprintf(out, "   /logicalnot /hyphen /registered /macron /degree\n");
-    fprintf(out, "   /plusminus /twosuperior /threesuperior /acute /mu\n");
-    fprintf(out, "   /paragraph /periodcentered /cedilla /onesuperior\n");
-    fprintf(out, "   /ordmasculine /guillemotright /onequarter /onehalf\n");
-    fprintf(out, "   /threequarters /questiondown /Agrave /Aacute\n");
-    fprintf(out, "   /Acircumflex /Atilde /Adieresis /Aring /AE /Ccedilla\n");
-    fprintf(out,
-            "   /Egrave /Eacute /Ecircumflex /Edieresis /Igrave /Iacute\n");
-    fprintf(out, "   /Icircumflex /Idieresis /Eth /Ntilde /Ograve /Oacute\n");
-    fprintf(out, "   /Ocircumflex /Otilde /Odieresis /multiply /Oslash\n");
-    fprintf(out, "   /Ugrave /Uacute /Ucircumflex /Udieresis /Yacute /Thorn\n");
-    fprintf(out, "   /germandbls /agrave /aacute /acircumflex /atilde\n");
-    fprintf(out, "   /adieresis /aring /ae /ccedilla /egrave /eacute\n");
-    fprintf(out, "   /ecircumflex /edieresis /igrave /iacute /icircumflex\n");
-    fprintf(out, "   /idieresis /eth /ntilde /ograve /oacute /ocircumflex\n");
-    fprintf(out, "   /otilde /odieresis /divide /oslash /ugrave /uacute\n");
-    fprintf(out, "   /ucircumflex /udieresis /yacute /thorn /ydieresis\n");
-    fprintf(out, "] def {restore} if\n");
-    fprintf(out, "/reencodeISO-1 {\n");
-    fprintf(out, "    dup length dict begin\n");
-    fprintf(out, "        {1 index /FID ne {def}{pop pop} ifelse} forall\n");
-    fprintf(out, "        /Encoding ISOLatin1Encoding def\n");
-    fprintf(out, "        currentdict\n");
-    fprintf(out, "    end\n");
-    fprintf(out, "} def\n");
+    fprintf(out, "%s",
+            "save\n"
+            "/ISOLatin1Encoding where {pop save true}{false} ifelse\n"
+            "/ISOLatin1Encoding [\n"
+            "   /.notdef /.notdef /.notdef /.notdef /.notdef /.notdef\n"
+            "   /.notdef /.notdef /.notdef /.notdef /.notdef /.notdef\n"
+            "   /.notdef /.notdef /.notdef /.notdef /.notdef /.notdef\n"
+            "   /.notdef /.notdef /.notdef /.notdef /.notdef /.notdef\n"
+            "   /.notdef /.notdef /.notdef /.notdef /.notdef /.notdef\n"
+            "   /.notdef /.notdef /space /exclam /quotedbl /numbersign\n"
+            "   /dollar /percent /ampersand /quoteright /parenleft\n"
+            "   /parenright /asterisk /plus /comma /minus /period\n"
+            "   /slash /zero /one /two /three /four /five /six /seven\n"
+            "   /eight /nine /colon /semicolon /less /equal /greater\n"
+            "   /question /at /A /B /C /D /E /F /G /H /I /J /K /L /M\n"
+            "   /N /O /P /Q /R /S /T /U /V /W /X /Y /Z /bracketleft\n"
+            "   /backslash /bracketright /asciicircum /underscore\n"
+            "   /quoteleft /a /b /c /d /e /f /g /h /i /j /k /l /m\n"
+            "   /n /o /p /q /r /s /t /u /v /w /x /y /z /braceleft\n"
+            "   /bar /braceright /asciitilde /guilsinglright /fraction\n"
+            "   /florin /quotesingle /quotedblleft /guilsinglleft /fi\n"
+            "   /fl /endash /dagger /daggerdbl /bullet /quotesinglbase\n"
+            "   /quotedblbase /quotedblright /ellipsis /trademark\n"
+            "   /perthousand /grave /scaron /circumflex /Scaron /tilde\n"
+            "   /breve /zcaron /dotaccent /dotlessi /Zcaron /ring\n"
+            "   /hungarumlaut /ogonek /caron /emdash /space /exclamdown\n"
+            "   /cent /sterling /currency /yen /brokenbar /section\n"
+            "   /dieresis /copyright /ordfeminine /guillemotleft\n"
+            "   /logicalnot /hyphen /registered /macron /degree\n"
+            "   /plusminus /twosuperior /threesuperior /acute /mu\n"
+            "   /paragraph /periodcentered /cedilla /onesuperior\n"
+            "   /ordmasculine /guillemotright /onequarter /onehalf\n"
+            "   /threequarters /questiondown /Agrave /Aacute\n"
+            "   /Acircumflex /Atilde /Adieresis /Aring /AE /Ccedilla\n"
+            "   /Egrave /Eacute /Ecircumflex /Edieresis /Igrave /Iacute\n"
+            "   /Icircumflex /Idieresis /Eth /Ntilde /Ograve /Oacute\n"
+            "   /Ocircumflex /Otilde /Odieresis /multiply /Oslash\n"
+            "   /Ugrave /Uacute /Ucircumflex /Udieresis /Yacute /Thorn\n"
+            "   /germandbls /agrave /aacute /acircumflex /atilde\n"
+            "   /adieresis /aring /ae /ccedilla /egrave /eacute\n"
+            "   /ecircumflex /edieresis /igrave /iacute /icircumflex\n"
+            "   /idieresis /eth /ntilde /ograve /oacute /ocircumflex\n"
+            "   /otilde /odieresis /divide /oslash /ugrave /uacute\n"
+            "   /ucircumflex /udieresis /yacute /thorn /ydieresis\n"
+            "] def {restore} if\n"
+            "/reencodeISO-1 {\n"
+            "    dup length dict begin\n"
+            "        {1 index /FID ne {def}{pop pop} ifelse} forall\n"
+            "        /Encoding ISOLatin1Encoding def\n"
+            "        currentdict\n"
+            "    end\n"
+            "} def\n"
+        );
 }
 
 static void
@@ -609,26 +609,28 @@ PSProlog(FILE *out, PSState *state)
     register int i;
 
     if (!state->args->wantEPS) {
-        fprintf(out, "%%!PS-Adobe-2.0\n");
-        fprintf(out, "%%%%Creator: xkbprint\n");
+        fprintf(out,
+                "%%!PS-Adobe-2.0\n"
+                "%%%%Creator: xkbprint\n");
         if (state->geom->name != None)
             fprintf(out, "%%%%Title: %s\n",
                     XkbAtomGetString(state->dpy, state->geom->name));
-        fprintf(out, "%%%%BoundingBox: (atend)\n");
-        fprintf(out, "%%%%Pages: 1\n");
-        fprintf(out, "%%%%PageOrder: Ascend\n");
-        fprintf(out, "%%%%DocumentFonts: (atend)\n");
-        fprintf(out, "%%%%DocumentData: Clean7Bit\n");
-        fprintf(out, "%%%%Orientation: Landscape\n");
-        fprintf(out, "%%%%EndComments\n");
-        fprintf(out, "%%%%BeginProlog\n");
-        fprintf(out, "%% Resolution is 1/10mm -- need pt sizes for fonts\n");
-        fprintf(out, "clippath pathbbox\n");
-        fprintf(out, "    /ury exch def /urx exch def\n");
-        fprintf(out, "    /llx exch def /lly exch def\n");
-        fprintf(out, "    newpath\n");
-        fprintf(out, "/devwidth  urx llx sub def\n");
-        fprintf(out, "/devheight ury lly sub def\n");
+        fprintf(out,
+                "%%%%BoundingBox: (atend)\n"
+                "%%%%Pages: 1\n"
+                "%%%%PageOrder: Ascend\n"
+                "%%%%DocumentFonts: (atend)\n"
+                "%%%%DocumentData: Clean7Bit\n"
+                "%%%%Orientation: Landscape\n"
+                "%%%%EndComments\n"
+                "%%%%BeginProlog\n"
+                "%% Resolution is 1/10mm -- need pt sizes for fonts\n"
+                "clippath pathbbox\n"
+                "    /ury exch def /urx exch def\n"
+                "    /llx exch def /lly exch def\n"
+                "    newpath\n"
+                "/devwidth  urx llx sub def\n"
+                "/devheight ury lly sub def\n");
     }
     else {
         int w, h;
@@ -667,27 +669,28 @@ PSProlog(FILE *out, PSState *state)
     }
     fprintf(out, "/kbdwidth %d def\n", state->geom->width_mm);
     fprintf(out, "/kbdheight %d def\n", state->geom->height_mm);
-    fprintf(out, "/pts { 254 mul 72 div } def\n");
-    fprintf(out, "/mm10 { 72 mul 254 div } def\n");
-    fprintf(out, "/landscape? {\n");
-    fprintf(out, "	devheight devwidth gt {\n");
-    fprintf(out, "		/pwidth devheight def /pheight devwidth def\n");
-    fprintf(out, "		0 devheight translate\n");
-    fprintf(out, "		-90 rotate\n");
-    fprintf(out, "	} {\n");
-    fprintf(out, "		/pwidth devwidth def /pheight devheight def\n");
-    fprintf(out, "	} ifelse\n");
-    fprintf(out, "	0 pheight translate\n");
-    fprintf(out, "	1 -1 scale\n");
-    fprintf(out, "} def\n");
-    fprintf(out, "/centeroffset {\n");
-    fprintf(out, "    /S     exch def\n");
-    fprintf(out, "    /HEIGHT exch def\n");
-    fprintf(out, "    /WIDTH exch def\n");
-    fprintf(out, "    S stringwidth /SH exch def /SW exch def\n");
-    fprintf(out, "    WIDTH SW sub 2 div\n");
-    fprintf(out, "    HEIGHT SH sub 2 div\n");
-    fprintf(out, "} def\n");
+    fprintf(out, "%s",
+            "/pts { 254 mul 72 div } def\n"
+            "/mm10 { 72 mul 254 div } def\n"
+            "/landscape? {\n"
+            "	devheight devwidth gt {\n"
+            "		/pwidth devheight def /pheight devwidth def\n"
+            "		0 devheight translate\n"
+            "		-90 rotate\n"
+            "	} {\n"
+            "		/pwidth devwidth def /pheight devheight def\n"
+            "	} ifelse\n"
+            "	0 pheight translate\n"
+            "	1 -1 scale\n"
+            "} def\n"
+            "/centeroffset {\n"
+            "    /S     exch def\n"
+            "    /HEIGHT exch def\n"
+            "    /WIDTH exch def\n"
+            "    S stringwidth /SH exch def /SW exch def\n"
+            "    WIDTH SW sub 2 div\n"
+            "    HEIGHT SH sub 2 div\n"
+            "} def\n");
     PSSetUpForLatin1(out, state);
     PSReencodeLatin1Font(out, DFLT_LABEL_FONT);
     if (state->args->wantColor) {
@@ -750,9 +753,10 @@ PSPageSetup(FILE *out, PSState *state, Bool drawBorder)
         fprintf(out, "%%%%BeginPageSetup\n");
         fprintf(out, "%% Keyboard %d\n", state->nPages + 1);
         if (state->nPages == 0) {
-            fprintf(out, "/realwidth devwidth def\n");
-            fprintf(out, "/realheight devheight def\n");
-            fprintf(out, "/devheight realheight 3 div def\n");
+            fprintf(out,
+                    "/realwidth devwidth def\n"
+                    "/realheight devheight def\n"
+                    "/devheight realheight 3 div def\n");
         }
         fprintf(out, "0 devheight dup 2 div add translate\n");
     }
@@ -762,26 +766,30 @@ PSPageSetup(FILE *out, PSState *state, Bool drawBorder)
     fprintf(out, "save\n");
     fprintf(out, "landscape?\n");
     if (state->args->scaleToFit) {
-        fprintf(out, "%% Scale keyboard to fit on the page\n");
-        fprintf(out, "/kbdscale pwidth 72 sub kbdwidth div def\n");
-        fprintf(out, "/kbdscalewidth kbdwidth kbdscale mul def\n");
-        fprintf(out, "/kbdscaleheight kbdheight kbdscale mul def\n");
-        fprintf(out, "/kbx 36 def\n");
-        fprintf(out, "/kby pheight kbdscaleheight sub 2 div def\n");
+        fprintf(out,
+                "%% Scale keyboard to fit on the page\n"
+                "/kbdscale pwidth 72 sub kbdwidth div def\n"
+                "/kbdscalewidth kbdwidth kbdscale mul def\n"
+                "/kbdscaleheight kbdheight kbdscale mul def\n"
+                "/kbx 36 def\n"
+                "/kby pheight kbdscaleheight sub 2 div def\n");
         PSGSave(out, state);
-        fprintf(out, "kbx kby translate\n");
-        fprintf(out, "kbdscale kbdscale scale\n");
+        fprintf(out,
+                "kbx kby translate\n"
+                "kbdscale kbdscale scale\n");
     }
     else {
-        fprintf(out, "%% Draw keyboard full size\n");
-        fprintf(out, "/kbdscale 1 def\n");
-        fprintf(out, "/kbdscalewidth kbdwidth mm10 def\n");
-        fprintf(out, "/kbdscaleheight kbdheight mm10 def\n");
-        fprintf(out, "/kbx pwidth kbdscalewidth sub 2 div def\n");
-        fprintf(out, "/kby pheight kbdscaleheight sub 2 div def\n");
+        fprintf(out,
+                "%% Draw keyboard full size\n"
+                "/kbdscale 1 def\n"
+                "/kbdscalewidth kbdwidth mm10 def\n"
+                "/kbdscaleheight kbdheight mm10 def\n"
+                "/kbx pwidth kbdscalewidth sub 2 div def\n"
+                "/kby pheight kbdscaleheight sub 2 div def\n");
         PSGSave(out, state);
-        fprintf(out, "kbx kby translate\n");
-        fprintf(out, "72 254 div dup scale\n");
+        fprintf(out,
+                "kbx kby translate\n"
+                "72 254 div dup scale\n");
     }
     if (drawBorder) {
         if (state->args->wantColor) {

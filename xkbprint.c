@@ -81,53 +81,50 @@ static Bool             synch;
 static void
 Usage(int argc, char *argv[])
 {
-    fprintf(stderr, "Usage: %s [options] input-file [ output-file ]\n",
-            argv[0]);
-    fprintf(stderr, "Legal options:\n");
-    fprintf(stderr, "-?,-help      Print this message\n");
-    fprintf(stderr, "-color        Use colors from geometry\n");
+    fprintf(stderr, "Usage: %s [options] input-file [ output-file ]\n%s",
+            argv[0],
+            "Legal options:\n"
+            "-?,-help      Print this message\n"
+            "-color        Use colors from geometry\n"
 #ifdef DEBUG
-    fprintf(stderr, "-d [flags]    Report debugging information\n");
+            "-d [flags]    Report debugging information\n"
 #endif
-    fprintf(stderr, "-dflts        Compute defaults for missing components\n");
-    fprintf(stderr, "-diffs        Only show explicit key definitions\n");
-    fprintf(stderr, "-eps          Generate an EPS file\n");
-    fprintf(stderr, "-fit          Fit keyboard image on page (default)\n");
-    fprintf(stderr, "-full         Print keyboard image full sized\n");
-    fprintf(stderr, "-grid <n>     Print a grid with <n> mm resolution\n");
-    fprintf(stderr,
-            "-if <name>    Specifies the name of an internal font to dump\n");
+            "-dflts        Compute defaults for missing components\n"
+            "-diffs        Only show explicit key definitions\n"
+            "-eps          Generate an EPS file\n"
+            "-fit          Fit keyboard image on page (default)\n"
+            "-full         Print keyboard image full sized\n"
+            "-grid <n>     Print a grid with <n> mm resolution\n"
+            "-if <name>    Specifies the name of an internal font to dump\n"
 #ifdef DEBUG
-    fprintf(stderr, "-I[<dir>]     Specifies a top level directory\n");
-    fprintf(stderr, "              for include directives.  You can\n");
-    fprintf(stderr, "              specify multiple directories.\n");
+            "-I[<dir>]     Specifies a top level directory\n"
+            "              for include directives.  You can\n"
+            "              specify multiple directories.\n"
 #endif
-    fprintf(stderr, "-kc           Also print keycodes, if possible\n");
-    fprintf(stderr, "-label <what> Specifies the label to be drawn on keys\n");
-    fprintf(stderr, "              Legal values for <what> are:\n");
-    fprintf(stderr, "                  none,name,code,symbols\n");
-    fprintf(stderr, "-lc <locale>  Use <locale> for fonts and symbols\n");
-    fprintf(stderr, "-level1       Use level 1 PostScript (default)\n");
-    fprintf(stderr, "-level2       Use level 2 PostScript\n");
-    fprintf(stderr, "-lg <num>     Use keyboard group <num> to print labels\n");
-    fprintf(stderr, "-ll <num>     Use shift level <num> to print labels\n");
-    fprintf(stderr, "-mono         Ignore colors from geometry (default)\n");
-    fprintf(stderr, "-n <num>      Print <num> copies (default 1)\n");
-    fprintf(stderr, "-nkg <num>    Number of groups to print on each key\n");
-    fprintf(stderr, "-nokc         Don't print keycodes, even if possible\n");
-    fprintf(stderr,
-            "-npk <num>    Number of keyboards to print on each page\n");
-    fprintf(stderr, "-ntg <num>    Total number of groups to print\n");
-    fprintf(stderr, "-o <file>     Specifies output file name\n");
-    fprintf(stderr,
-            "-R[<DIR>]     Specifies the root directory for relative\n");
-    fprintf(stderr, "              path names\n");
-    fprintf(stderr, "-pict <what>  Specifies use of pictographs instead of\n");
-    fprintf(stderr, "              keysym names where available, <what> can\n");
-    fprintf(stderr,
-            "              be \"all\", \"none\" or \"common\" (default)\n");
-    fprintf(stderr, "-synch        Force synchronization\n");
-    fprintf(stderr, "-w <lvl>      Set warning level (0=none, 10=all)\n");
+            "-kc           Also print keycodes, if possible\n"
+            "-label <what> Specifies the label to be drawn on keys\n"
+            "              Legal values for <what> are:\n"
+            "                  none,name,code,symbols\n"
+            "-lc <locale>  Use <locale> for fonts and symbols\n"
+            "-level1       Use level 1 PostScript (default)\n"
+            "-level2       Use level 2 PostScript\n"
+            "-lg <num>     Use keyboard group <num> to print labels\n"
+            "-ll <num>     Use shift level <num> to print labels\n"
+            "-mono         Ignore colors from geometry (default)\n"
+            "-n <num>      Print <num> copies (default 1)\n"
+            "-nkg <num>    Number of groups to print on each key\n"
+            "-nokc         Don't print keycodes, even if possible\n"
+            "-npk <num>    Number of keyboards to print on each page\n"
+            "-ntg <num>    Total number of groups to print\n"
+            "-o <file>     Specifies output file name\n"
+            "-R[<DIR>]     Specifies the root directory for relative\n"
+            "              path names\n"
+            "-pict <what>  Specifies use of pictographs instead of\n"
+            "              keysym names where available, <what> can\n"
+            "              be \"all\", \"none\" or \"common\" (default)\n"
+            "-synch        Force synchronization\n"
+            "-w <lvl>      Set warning level (0=none, 10=all)\n"
+        );
 }
 
 /***====================================================================***/
