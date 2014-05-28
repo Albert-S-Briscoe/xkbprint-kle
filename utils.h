@@ -92,13 +92,7 @@ extern void uInternalError(const char *s, ...);
 #define	uStringEqual(s1,s2)	(uStringCompare(s1,s2)==Equal)
 #define	uStringPrefix(p,s)	(strncmp(p,s,strlen(p))==0)
 #define	uStringCompare(s1,s2)	(strcmp(s1,s2))
-#define	uStrCaseEqual(s1,s2)	(uStrCaseCmp(s1,s2)==0)
-#ifdef HAVE_STRCASECMP
-#define	uStrCaseCmp(s1,s2)	(strcasecmp(s1,s2))
-#else
-extern int uStrCaseCmp(const char * /* s1 */ ,
-                       const char * /* s2 */);
-#endif
+#define	uStrCaseEqual(s1,s2)	(strcasecmp(s1,s2)==0)
 
 /***====================================================================***/
 
