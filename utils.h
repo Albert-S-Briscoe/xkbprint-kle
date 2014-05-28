@@ -99,11 +99,6 @@ extern void uInternalError(const char *s, ...);
 extern int uStrCaseCmp(const char * /* s1 */ ,
                        const char * /* s2 */);
 #endif
-#ifdef HAVE_STRDUP
-#define	uStringDup(s1)		(strdup(s1))
-#else
-extern char *uStringDup(const char *  /* s1 */);
-#endif
 
 /***====================================================================***/
 

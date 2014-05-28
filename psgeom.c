@@ -409,9 +409,9 @@ CrackXLFDName(const char *name, FontStuff *stuff)
     if ((name == NULL) || (stuff == NULL))
         return False;
     if (name[0] == '-')
-        tmp = uStringDup(&name[1]);
+        tmp = strdup(&name[1]);
     else
-        tmp = uStringDup(name);
+        tmp = strdup(name);
     if (tmp == NULL)
         return False;
     stuff->foundry = tmp;
@@ -1019,7 +1019,7 @@ PSDoodad(FILE *out, PSState *state, XkbDoodadPtr doodad)
             char *tmp, *buf, *end;
             int offset = (leading * 8 / 10);
 
-            tmp = buf = uStringDup(doodad->text.text);
+            tmp = buf = strdup(doodad->text.text);
             while (tmp != NULL) {
                 end = strchr(tmp, '\n');
                 if (end != NULL)

@@ -147,20 +147,6 @@ uInternalError(const char *s, ...)
 
 /***====================================================================***/
 
-#ifndef HAVE_STRDUP
-char *
-uStringDup(const char *str)
-{
-    char *rtrn;
-
-    if (str == NULL)
-        return NULL;
-    rtrn = (char *) malloc(strlen(str) + 1);
-    strcpy(rtrn, str);
-    return rtrn;
-}
-#endif
-
 #ifndef HAVE_STRCASECMP
 int
 uStrCaseCmp(const char *str1, const char *str2)
