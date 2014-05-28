@@ -39,7 +39,7 @@ XORG_MACROS_VERSION(1.8)
 XORG_DEFAULT_OPTIONS
 
 # Checks for pkg-config packages
-PKG_CHECK_MODULES(XKBPRINT, xkbfile x11)
+PKG_CHECK_MODULES(XKBPRINT, [xkbfile x11 xproto >= 7.0.17])
 
 AC_CONFIG_FILES([
 	Makefile

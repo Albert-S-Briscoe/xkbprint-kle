@@ -77,12 +77,13 @@ typedef int Comparison;
 /***====================================================================***/
 
 extern Boolean uSetErrorFile(const char *name);
-extern void uInformation(const char *s, ...);
-extern void uAction(const char *s, ...);
-extern void uWarning(const char *s, ...);
-extern void uError(const char *s, ...);
-extern void uFatalError(const char *s, ...);
-extern void uInternalError(const char *s, ...);
+extern void uInformation(const char *s, ...) _X_ATTRIBUTE_PRINTF(1, 2);
+extern void uAction(const char *s, ...) _X_ATTRIBUTE_PRINTF(1, 2);
+extern void uWarning(const char *s, ...) _X_ATTRIBUTE_PRINTF(1, 2);
+extern void uError(const char *s, ...) _X_ATTRIBUTE_PRINTF(1, 2);
+extern void uFatalError(const char *s, ...) _X_ATTRIBUTE_PRINTF(1, 2)
+    _X_NORETURN;
+extern void uInternalError(const char *s, ...) _X_ATTRIBUTE_PRINTF(1, 2);
 
 /***====================================================================***/
 
