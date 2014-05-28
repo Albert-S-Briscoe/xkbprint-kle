@@ -36,23 +36,6 @@ unsigned int debugFlags;
 
 /***====================================================================***/
 
-Opaque
-uAlloc(unsigned size)
-{
-    return ((Opaque) malloc(size));
-}
-
-/***====================================================================***/
-
-Opaque
-uCalloc(unsigned n, unsigned size)
-{
-    return ((Opaque) calloc(n, size));
-}
-
-
-/***====================================================================***/
-
 static FILE *errorFile = NULL;
 
 Boolean
@@ -172,7 +155,7 @@ uStringDup(const char *str)
 
     if (str == NULL)
         return NULL;
-    rtrn = (char *) uAlloc(strlen(str) + 1);
+    rtrn = (char *) malloc(strlen(str) + 1);
     strcpy(rtrn, str);
     return rtrn;
 }

@@ -76,15 +76,6 @@ typedef int Comparison;
 
 /***====================================================================***/
 
-extern Opaque uAlloc(unsigned    /* size */);
-extern Opaque uCalloc(unsigned   /* n */ ,
-                      unsigned   /* size */);
-
-#define	uTypedAlloc(t)		((t *)uAlloc((unsigned)sizeof(t)))
-#define	uTypedCalloc(n,t)	((t *)uCalloc((unsigned)n,(unsigned)sizeof(t)))
-
-/***====================================================================***/
-
 extern Boolean uSetErrorFile(const char *name);
 extern void uInformation(const char *s, ...);
 extern void uAction(const char *s, ...);

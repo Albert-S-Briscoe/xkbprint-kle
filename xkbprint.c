@@ -421,7 +421,7 @@ parseArgs(int argc, char *argv[])
         FILE *file = NULL;
 
         if (outputFile == NULL) {
-            outputFile = uAlloc(strlen(outputFont) + 5);
+            outputFile = malloc(strlen(outputFont) + 5);
             sprintf(outputFile, "%s.pfa", outputFont);
         }
         else if (uStringEqual(outputFile, "-"))
@@ -484,10 +484,10 @@ parseArgs(int argc, char *argv[])
         outputFormat = WANT_PS_FILE;
     if ((outputFile == NULL) && (inputFile != NULL) &&
         uStringEqual(inputFile, "-")) {
-        int len;
+        size_t len;
 
         len = strlen("stdin.eps") + 2;
-        outputFile = uTypedCalloc(len, char);
+        outputFile = calloc(len, sizeof(char));
 
         if (outputFile == NULL) {
             uInternalError("Cannot allocate space for output file name\n");
@@ -500,7 +500,7 @@ parseArgs(int argc, char *argv[])
             sprintf(outputFile, "stdin.ps");
     }
     else if ((outputFile == NULL) && (inputFile != NULL)) {
-        int len;
+        size_t len;
         char *base, *ext;
 
         base = strrchr(inputFile, '/');
@@ -510,7 +510,7 @@ parseArgs(int argc, char *argv[])
             base++;
 
         len = strlen(base) + strlen("eps") + 2;
-        outputFile = uTypedCalloc(len, char);
+        outputFile = calloc(len, sizeof(char));
 
         if (outputFile == NULL) {
             uInternalError("Cannot allocate space for output file name\n");
@@ -533,7 +533,7 @@ parseArgs(int argc, char *argv[])
         }
     }
     else if (outputFile == NULL) {
-        int len;
+        size_t len;
         char *ch, *name, buf[128];
 
         if (inDpyName[0] == ':')
@@ -542,7 +542,7 @@ parseArgs(int argc, char *argv[])
             name = inDpyName;
 
         len = strlen(name) + strlen("eps") + 2;
-        outputFile = uTypedCalloc(len, char);
+        outputFile = calloc(len, sizeof(char));
 
         if (outputFile == NULL) {
             uInternalError("Cannot allocate space for output file name\n");

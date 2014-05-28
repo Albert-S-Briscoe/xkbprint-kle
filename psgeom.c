@@ -869,7 +869,7 @@ PSPageTrailer(FILE *out, PSState *state)
             if (sName == NULL)
                 sName = "(unknown)";
 
-            lbuf = uAlloc(10 + strlen(sName));
+            lbuf = malloc(10 + strlen(sName));
             if (!lbuf) {
                 uFatalError("Can't allocate memory for string\n");
             }
@@ -904,7 +904,7 @@ PSPageTrailer(FILE *out, PSState *state)
             if (sName == NULL)
                 sName = "(unknown)";
 
-            lbuf = uAlloc(12 + strlen(sName));
+            lbuf = malloc(12 + strlen(sName));
             if (!lbuf) {
                 uFatalError("Can't allocate memory for string\n");
             }
