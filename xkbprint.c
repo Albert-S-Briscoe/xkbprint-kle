@@ -498,9 +498,9 @@ parseArgs(int argc, char *argv[])
             exit(1);
         }
         if (args.wantEPS)
-            sprintf(outputFile, "stdin.eps");
+            snprintf(outputFile, len, "stdin.eps");
         else
-            sprintf(outputFile, "stdin.ps");
+            snprintf(outputFile, len, "stdin.ps");
     }
     else if ((outputFile == NULL) && (inputFile != NULL)) {
         size_t len;
@@ -523,9 +523,9 @@ parseArgs(int argc, char *argv[])
         ext = strrchr(base, '.');
         if (ext == NULL) {
             if (args.wantEPS)
-                sprintf(outputFile, "%s.eps", base);
+                snprintf(outputFile, len, "%s.eps", base);
             else
-                sprintf(outputFile, "%s.ps", base);
+                snprintf(outputFile, len, "%s.ps", base);
         }
         else {
             strcpy(outputFile, base);
@@ -540,7 +540,7 @@ parseArgs(int argc, char *argv[])
         char *ch, *name, buf[128];
 
         if (inDpyName[0] == ':')
-            sprintf(name = buf, "server%s", inDpyName);
+            snprintf(name = buf, sizeof(buf), "server%s", inDpyName);
         else
             name = inDpyName;
 

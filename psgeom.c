@@ -852,11 +852,13 @@ PSPageTrailer(FILE *out, PSState *state)
             Atom sAtom;
 
             if (state->args->nLabelGroups == 1)
-                sprintf(buf, "Group %d", state->args->baseLabelGroup + 1);
+                snprintf(buf, sizeof(buf), "Group %d",
+                         state->args->baseLabelGroup + 1);
             else
-                sprintf(buf, "Groups %d-%d", state->args->baseLabelGroup + 1,
-                        state->args->baseLabelGroup +
-                        state->args->nLabelGroups);
+                snprintf(buf, sizeof(buf), "Groups %d-%d",
+                         state->args->baseLabelGroup + 1,
+                         state->args->baseLabelGroup +
+                         state->args->nLabelGroups);
             fprintf(out, "kbx kbdscalewidth 0 (%s) centeroffset pop add\n",
                     buf);
             fprintf(out, "    kby kbdscaleheight add %d add\n", baseline);
@@ -933,11 +935,13 @@ PSPageTrailer(FILE *out, PSState *state)
             PSSetColor(out, state, state->black);
             PSSetFont(out, state, FONT_LATIN1, 14, False);
             if (state->args->nLabelGroups == 1)
-                sprintf(buf, "Group %d", state->args->baseLabelGroup + 1);
+                snprintf(buf, sizeof(buf), "Group %d",
+                         state->args->baseLabelGroup + 1);
             else
-                sprintf(buf, "Groups %d-%d", state->args->baseLabelGroup + 1,
-                        state->args->baseLabelGroup +
-                        state->args->nLabelGroups + 1);
+                snprintf(buf, sizeof(buf), "Groups %d-%d",
+                         state->args->baseLabelGroup + 1,
+                         state->args->baseLabelGroup +
+                         state->args->nLabelGroups + 1);
             fprintf(out, "kbx kbdscalewidth 0 (%s) centeroffset pop add\n",
                     buf);
             fprintf(out, "    kby kbdscaleheight add %d add\n", baseline);
@@ -1656,13 +1660,13 @@ FindKeysymsByName(XkbDescPtr xkb, char *name, PSState *state, KeyTop *top)
             }
             else if (((sym & (~0xff)) == 0) && isprint(sym) && (!isspace(sym))) {
                 if (sym == '(')
-                    sprintf((char *) buf, "\\(");
+                    snprintf((char *) buf, sizeof(buf), "\\(");
                 else if (sym == ')')
-                    sprintf((char *) buf, "\\)");
+                    snprintf((char *) buf, sizeof(buf), "\\)");
                 else if (sym == '\\')
-                    sprintf((char *) buf, "\\\\");
+                    snprintf((char *) buf, sizeof(buf), "\\\\");
                 else
-                    sprintf((char *) buf, "%c", (char) sym);
+                    snprintf((char *) buf, sizeof(buf), "%c", (char) sym);
                 top->font[(g * 2) + l] = FONT_LATIN1;
                 top->size[(g * 2) + l] = SZ_MEDIUM;
                 switch (buf[0]) {
@@ -1703,7 +1707,7 @@ FindKeysymsByName(XkbDescPtr xkb, char *name, PSState *state, KeyTop *top)
                 if (tmp != NULL)
                     strcpy((char *) buf, tmp);
                 else
-                    sprintf((char *) buf, "(%ld)", sym);
+                    snprintf((char *) buf, sizeof(buf), "(%ld)", sym);
                 top->font[(g * 2) + l] = FONT_LATIN1;
                 if (strlen((char *) buf) < 9)
                     top->size[(g * 2) + l] = SZ_SMALL;
@@ -1878,7 +1882,7 @@ PSLabelKey(FILE *out, PSState *state, KeyTop *top, int x, int y,
         }
     }
     if (state->args->wantKeycodes) {
-        sprintf(keycode, "%d", kc);
+        snprintf(keycode, sizeof(keycode), "%d", kc);
         PSSetFont(out, state, FONT_LATIN1, 8, True);
         PSDrawLabel(out, keycode, x + bounds->x1, y + btm - 5, w, 0);
     }
@@ -2008,12 +2012,12 @@ PSSection(FILE *out, PSState *state, XkbSectionPtr section)
                 }
                 else if (state->args->label == LABEL_KEYCODE) {
                     name = buf;
-                    sprintf(name, "%d",
+                    snprintf(name, sizeof(buf), "%d",
                             XkbFindKeycodeByName(xkb, key->name.name, True));
                     if (olKey) {
                         name2 = buf2;
-                        sprintf(name, "%d",
-                                XkbFindKeycodeByName(xkb, olKey, True));
+                        snprintf(name2, sizeof(buf2), "%d",
+                                 XkbFindKeycodeByName(xkb, olKey, True));
                     }
                 }
                 bzero(&top, sizeof(KeyTop));
