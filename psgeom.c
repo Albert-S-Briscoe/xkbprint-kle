@@ -420,37 +420,37 @@ CrackXLFDName(const char *name, FontStuff *stuff)
         return False;
     stuff->foundry = tmp;
 
-    if ((tmp = index(tmp, '-')) == NULL)
+    if ((tmp = strchr(tmp, '-')) == NULL)
         goto BAILOUT;
     else
         *tmp++ = '\0';
     stuff->face = tmp;
 
-    if ((tmp = index(tmp, '-')) == NULL)
+    if ((tmp = strchr(tmp, '-')) == NULL)
         goto BAILOUT;
     else
         *tmp++ = '\0';
     stuff->weight = tmp;
 
-    if ((tmp = index(tmp, '-')) == NULL)
+    if ((tmp = strchr(tmp, '-')) == NULL)
         goto BAILOUT;
     else
         *tmp++ = '\0';
     stuff->slant = tmp;
 
-    if ((tmp = index(tmp, '-')) == NULL)
+    if ((tmp = strchr(tmp, '-')) == NULL)
         goto BAILOUT;
     else
         *tmp++ = '\0';
     stuff->setWidth = tmp;
 
-    if ((tmp = index(tmp, '-')) == NULL)
+    if ((tmp = strchr(tmp, '-')) == NULL)
         goto BAILOUT;
     else
         *tmp++ = '\0';
     stuff->variant = tmp;
 
-    if ((tmp = index(tmp, '-')) == NULL)
+    if ((tmp = strchr(tmp, '-')) == NULL)
         goto BAILOUT;
     else
         *tmp++ = '\0';
@@ -459,7 +459,7 @@ CrackXLFDName(const char *name, FontStuff *stuff)
     else if (sscanf(tmp, "%i", &stuff->pixelSize) != 1)
         goto BAILOUT;
 
-    if ((tmp = index(tmp, '-')) == NULL)
+    if ((tmp = strchr(tmp, '-')) == NULL)
         goto BAILOUT;
     else
         *tmp++ = '\0';
@@ -468,7 +468,7 @@ CrackXLFDName(const char *name, FontStuff *stuff)
     else if (sscanf(tmp, "%i", &stuff->ptSize) != 1)
         goto BAILOUT;
 
-    if ((tmp = index(tmp, '-')) == NULL)
+    if ((tmp = strchr(tmp, '-')) == NULL)
         goto BAILOUT;
     else
         *tmp++ = '\0';
@@ -477,7 +477,7 @@ CrackXLFDName(const char *name, FontStuff *stuff)
     else if (sscanf(tmp, "%i", &stuff->resX) != 1)
         goto BAILOUT;
 
-    if ((tmp = index(tmp, '-')) == NULL)
+    if ((tmp = strchr(tmp, '-')) == NULL)
         goto BAILOUT;
     else
         *tmp++ = '\0';
@@ -486,13 +486,13 @@ CrackXLFDName(const char *name, FontStuff *stuff)
     else if (sscanf(tmp, "%i", &stuff->resY) != 1)
         goto BAILOUT;
 
-    if ((tmp = index(tmp, '-')) == NULL)
+    if ((tmp = strchr(tmp, '-')) == NULL)
         goto BAILOUT;
     else
         *tmp++ = '\0';
     stuff->spacing = tmp;
 
-    if ((tmp = index(tmp, '-')) == NULL)
+    if ((tmp = strchr(tmp, '-')) == NULL)
         goto BAILOUT;
     else
         *tmp++ = '\0';
@@ -501,7 +501,7 @@ CrackXLFDName(const char *name, FontStuff *stuff)
     else if (sscanf(tmp, "%i", &stuff->avgWidth) != 1)
         goto BAILOUT;
 
-    if ((tmp = index(tmp, '-')) == NULL)
+    if ((tmp = strchr(tmp, '-')) == NULL)
         goto BAILOUT;
     else
         *tmp++ = '\0';
