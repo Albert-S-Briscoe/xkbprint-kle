@@ -27,6 +27,10 @@
   \*/
 /* $XFree86: xc/programs/xkbprint/utils.c,v 3.4 2001/01/17 23:46:11 dawes Exp $ */
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include 	"utils.h"
 #include	<ctype.h>
 #include	<stdlib.h>
@@ -144,3 +148,46 @@ uInternalError(const char *s, ...)
     va_end(ap);
     return;
 }
+
+/***====================================================================***/
+
+#ifndef HAVE_ASPRINTF
+int
+uAsprintf(char ** ret, const char *format, ...)
+{
+    char buf[256];
+    int len;
+    va_list ap;
+
+    va_start(ap, format);
+    len = vsnprintf(buf, sizeof(buf), format, ap);
+    va_end(ap);
+
+    if (len < 0)
+        return -1;
+
+    if (len < sizeof(buf))
+    {
+        *ret = strdup(buf);
+    }
+    else
+    {
+        *ret = malloc(len + 1); /* snprintf doesn't count trailing '\0' */
+        if (*ret != NULL)
+        {
+            va_start(ap, format);
+            len = vsnprintf(*ret, len + 1, format, ap);
+            va_end(ap);
+            if (len < 0) {
+                free(*ret);
+                *ret = NULL;
+            }
+        }
+    }
+
+    if (*ret == NULL)
+        return -1;
+
+    return len;
+}
+#endif /* HAVE_ASPRINTF */

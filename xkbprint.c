@@ -26,6 +26,10 @@
  ********************************************************/
 /* $XFree86: xc/programs/xkbprint/xkbprint.c,v 3.10 2003/05/27 22:27:07 tsi Exp $ */
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include <stdio.h>
 #include <ctype.h>
 #include <X11/Xlocale.h>
@@ -421,8 +425,7 @@ parseArgs(int argc, char *argv[])
         FILE *file = NULL;
 
         if (outputFile == NULL) {
-            outputFile = malloc(strlen(outputFont) + 5);
-            sprintf(outputFile, "%s.pfa", outputFont);
+            asprintf(&outputFile, "%s.pfa", outputFont);
         }
         else if (uStringEqual(outputFile, "-"))
             file = stdout;

@@ -95,6 +95,12 @@ extern void uInternalError(const char *s, ...) _X_ATTRIBUTE_PRINTF(1, 2);
 #define	uStringCompare(s1,s2)	(strcmp(s1,s2))
 #define	uStrCaseEqual(s1,s2)	(strcasecmp(s1,s2)==0)
 
+#ifndef HAVE_ASPRINTF
+extern _X_HIDDEN int _X_ATTRIBUTE_PRINTF(2,3)
+    uAsprintf(char ** ret, const char *format, ...);
+#define asprintf                uAsprintf
+#endif
+
 /***====================================================================***/
 
 _XFUNCPROTOEND

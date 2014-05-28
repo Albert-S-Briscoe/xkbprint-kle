@@ -26,6 +26,10 @@
  ********************************************************/
 /* $XFree86: xc/programs/xkbprint/psgeom.c,v 1.5 2001/07/25 15:05:25 dawes Exp $ */
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #define	XK_TECHNICAL
 #define	XK_PUBLISHING
 #define	XK_KATAKANA
@@ -869,11 +873,9 @@ PSPageTrailer(FILE *out, PSState *state)
             if (sName == NULL)
                 sName = "(unknown)";
 
-            lbuf = malloc(10 + strlen(sName));
-            if (!lbuf) {
+            if (asprintf(&lbuf, "Layout: %s", sName) == -1) {
                 uFatalError("Can't allocate memory for string\n");
             }
-            sprintf(lbuf, "Layout: %s", sName);
             fprintf(out, "kbx kbdscalewidth 0 (%s) centeroffset pop add\n",
                     lbuf);
             fprintf(out, "    kby kbdscaleheight add %d add\n", baseline);
@@ -904,11 +906,9 @@ PSPageTrailer(FILE *out, PSState *state)
             if (sName == NULL)
                 sName = "(unknown)";
 
-            lbuf = malloc(12 + strlen(sName));
-            if (!lbuf) {
+            if (asprintf(&lbuf, "Keycodes: %s", sName) == -1) {
                 uFatalError("Can't allocate memory for string\n");
             }
-            sprintf(lbuf, "Keycodes: %s", sName);
             fprintf(out, "kbx kbdscalewidth 0 (%s) centeroffset pop add\n",
                     lbuf);
             fprintf(out, "    kby kbdscaleheight add %d add\n", baseline);
