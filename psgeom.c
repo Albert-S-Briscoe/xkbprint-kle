@@ -1758,7 +1758,6 @@ static void
 PSLabelKey(FILE *out, PSState *state, KeyTop *top, int x, int y,
            XkbBoundsPtr bounds, int kc, int btm)
 {
-    char keycode[10];
     int w, h, i;
     int row_y[3];
     int col_x[3];
@@ -1855,10 +1854,10 @@ PSLabelKey(FILE *out, PSState *state, KeyTop *top, int x, int y,
         }
     for (i = 0; i < NLABELS; i++) {
         if (present[i]) {
-            int len, size;
+            int size;
 
             if (top->size[i] == SZ_AUTO) {
-                len = strlen(top->label[i]);
+                int len = strlen(top->label[i]);
                 if (len == 1) {
                     if (top->font[i] == FONT_ISOCAPS)
                         size = 18;
@@ -1887,6 +1886,8 @@ PSLabelKey(FILE *out, PSState *state, KeyTop *top, int x, int y,
         }
     }
     if (state->args->wantKeycodes) {
+        char keycode[10];
+
         snprintf(keycode, sizeof(keycode), "%d", kc);
         PSSetFont(out, state, FONT_LATIN1, 8, True);
         PSDrawLabel(out, keycode, x + bounds->x1, y + btm - 5, w, 0);
