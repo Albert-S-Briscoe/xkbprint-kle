@@ -126,7 +126,7 @@ typedef struct _PSFontDef {
 } PSFontDef;
 
 static PSFontDef internalFonts[] = {
-    { "IsoKeyCaps", IsoKeyCaps }
+    { "IsoKeyCaps", &IsoKeyCaps }
 };
 static int nInternalFonts = (sizeof(internalFonts) / sizeof(PSFontDef));
 
@@ -171,10 +171,7 @@ PSIncludeFont(FILE *out, const char *font)
     }
     if (pstr != NULL) {
         fprintf(out, "%%%%BeginFont: %s\n", font);
-        while (*pstr != NULL) {
-            fprintf(out, "%s\n", *pstr);
-            pstr++;
-        }
+        fprintf(out, "%s", *pstr);
         fprintf(out, "%%%%EndFont\n");
         return True;
     }
