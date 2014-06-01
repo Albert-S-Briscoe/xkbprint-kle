@@ -1,6 +1,3 @@
-.\" $Xorg: xkbprint.man,v 1.3 2000/08/17 19:54:50 cpqbld Exp $
-.\"
-.\" $XFree86: xc/programs/xkbprint/xkbprint.man,v 1.7 2001/01/27 18:21:16 dawes Exp $
 .\"
 .TH XKBPRINT 1 __xorgversion__
 .SH NAME

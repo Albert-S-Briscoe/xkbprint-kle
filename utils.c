@@ -1,7 +1,4 @@
-
   /*\
-   * $Xorg: utils.c,v 1.5 2000/08/17 19:54:50 cpqbld Exp $
-   *
    *                          COPYRIGHT 1990
    *                    DIGITAL EQUIPMENT CORPORATION
    *                       MAYNARD, MASSACHUSETTS
@@ -25,7 +22,6 @@
    * used in advertising or publicity pertaining to distribution of the
    * software without specific, written prior permission.
   \*/
-/* $XFree86: xc/programs/xkbprint/utils.c,v 3.4 2001/01/17 23:46:11 dawes Exp $ */
 
 #ifdef HAVE_CONFIG_H
 #include "config.h"

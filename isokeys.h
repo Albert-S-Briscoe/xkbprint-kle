@@ -1,7 +1,6 @@
 #ifndef _ISOKEYS_H_
 #define _ISOKEYS_H_ 1
 
-/* $Xorg: isokeys.h,v 1.3 2000/08/17 19:54:49 cpqbld Exp $ */
 /************************************************************
  Copyright (c) 1995 by Silicon Graphics Computer Systems, Inc.
 
