@@ -119,6 +119,7 @@ Usage(int argc, char *argv[])
             "              keysym names where available, <what> can\n"
             "              be \"all\", \"none\" or \"common\" (default)\n"
             "-synch        Force synchronization\n"
+            "-version      Print program version\n"
             "-w <lvl>      Set warning level (0=none, 10=all)\n"
         );
 }
@@ -386,6 +387,10 @@ parseArgs(int argc, char *argv[])
         else if ((strcmp(argv[i], "-synch") == 0) ||
                  (strcmp(argv[i], "-s") == 0)) {
             synch = True;
+        }
+        else if (strcmp(argv[i], "-version") == 0) {
+            puts(PACKAGE_STRING);
+            exit(0);
         }
         else if (strcmp(argv[i], "-w") == 0) {
             if ((i >= (argc - 1)) || (!isdigit(argv[i + 1][0]))) {

@@ -100,6 +100,9 @@ Controls use of pictographs instead of keysym names where available.
 .B -synch
 Forces synchronization for X requests.
 .TP 8
+.B -version
+Print out the program version and exit.
+.TP 8
 .B -w\ \fIlevel\fP
 Sets warning level (0 for no warning, 10 for all warnings).
 .SH "SEE ALSO"
