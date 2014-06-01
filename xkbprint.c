@@ -57,10 +57,6 @@
 #define	WANT_PS_FILE	1
 #define	WANT_X_SERVER	2
 
-#define	INPUT_UNKNOWN	0
-#define	INPUT_XKB	1
-#define	INPUT_XKM	2
-
 
 static unsigned         outputFormat = WANT_DEFAULT;
 static const char *     wantLocale = "C";
