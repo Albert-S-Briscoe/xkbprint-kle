@@ -1317,7 +1317,7 @@ PSNonLatin1Symbol(KeySym sym, unsigned char *buf,
         *font_rtrn = FONT_SYMBOL;
     if (sz_rtrn != NULL)
         *sz_rtrn = SZ_MEDIUM;
-    if ((sym & (~0xff)) == 0x700) {
+    if ((sym & (~0xffUL)) == 0x700) {
         switch (sym) {
             /* Greek symbol */
         case XK_Greek_ALPHA:
@@ -1663,7 +1663,7 @@ FindKeysymsByName(XkbDescPtr xkb, char *name, PSState *state, KeyTop *top)
                 top->font[(g * 2) + l] = font;
                 top->size[(g * 2) + l] = sz;
             }
-            else if (((sym & (~0xff)) == 0) && isprint(sym) && (!isspace(sym))) {
+            else if (((sym & (~0xffUL)) == 0) && isprint(sym) && (!isspace(sym))) {
                 if (sym == '(')
                     snprintf((char *) buf, sizeof(buf), "\\(");
                 else if (sym == ')')
@@ -1857,7 +1857,7 @@ PSLabelKey(FILE *out, PSState *state, KeyTop *top, int x, int y,
             int size;
 
             if (top->size[i] == SZ_AUTO) {
-                int len = strlen(top->label[i]);
+                size_t len = strlen(top->label[i]);
                 if (len == 1) {
                     if (top->font[i] == FONT_ISOCAPS)
                         size = 18;

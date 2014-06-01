@@ -453,7 +453,7 @@ parseArgs(int argc, char *argv[])
         /* Nothing */
     }
     else if (strchr(inputFile, ':') == NULL) {
-        int len = strlen(inputFile);
+        size_t len = strlen(inputFile);
 
         if ((len > 4) && (strcmp(&inputFile[len - 4], ".xkm") == 0)) {
             /* Nothing */
