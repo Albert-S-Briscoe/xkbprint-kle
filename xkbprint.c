@@ -418,7 +418,7 @@ parseArgs(int argc, char *argv[])
             uAction("Root directory (-R) option ignored\n");
         }
     }
-    if (outputFont != NULL) {
+/*	if (outputFont != NULL) {
         Bool ok;
         FILE *file = NULL;
 
@@ -449,7 +449,7 @@ parseArgs(int argc, char *argv[])
         }
         exit((ok != 0));
     }
-    if (inputFile == NULL) {
+*/	if (inputFile == NULL) {
         uError("No input file specified\n");
         Usage(argc, argv);
         return False;
@@ -764,7 +764,7 @@ main(int argc, char *argv[])
         }
         switch (outputFormat) {
         case WANT_PS_FILE:
-            ok = GeometryToPostScript(out, &result, &args);
+            ok = GeometryToJSON(out, &result, &args);
             break;
         case WANT_X_SERVER:
             uInternalError("Output to X server not implemented yet\n");

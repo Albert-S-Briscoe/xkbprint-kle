@@ -17,6 +17,7 @@
 #include <X11/Xutil.h>
 
 #include <xkbcommon/xkbcommon.h>
+#include <json-c/json.h>
 
 #if defined(sgi)
 #include <malloc.h>
@@ -226,6 +227,7 @@ FindKeysymsByName(XkbDescPtr xkb, char *name, PSState *state, KeyTop *top)
             continue;
         for (l = 0; l < 2; l++) {
             int font, sz;
+            unsigned char utf8[30];
 
             if (level + l >= XkbKeyGroupWidth(xkb, kc, (eG + g)))
                 continue;
@@ -235,11 +237,17 @@ FindKeysymsByName(XkbDescPtr xkb, char *name, PSState *state, KeyTop *top)
                 sym = CheckSymbolAlias(sym, state);
             topSyms[(g * 2) + l] = sym;
 
-            if (PSKeycapsSymbol(sym, buf, &font, &sz, state)) {
+            utf8[0] = '\0';
+            xkb_keysym_to_utf8(sym, utf8, 30);
+            if ((utf8[0] >= '\x20') && (utf8[0] != '\x7f')) {
+            	fprintf(stderr, "Keycode text: \"%s\"\n", utf8);
+           	}
+
+/*            if (PSKeycapsSymbol(sym, buf, &font, &sz, state)) {
                 top->font[(g * 2) + l] = font;
                 top->size[(g * 2) + l] = sz;
             }
-            else if (((sym & (~0xffUL)) == 0) && isprint(sym) && (!isspace(sym))) {
+            else*/ if (((sym & (~0xffUL)) == 0) && isprint(sym) && (!isspace(sym))) {
                 if (sym == '(')
                     snprintf((char *) buf, sizeof(buf), "\\(");
                 else if (sym == ')')
@@ -248,8 +256,8 @@ FindKeysymsByName(XkbDescPtr xkb, char *name, PSState *state, KeyTop *top)
                     snprintf((char *) buf, sizeof(buf), "\\\\");
                 else
                     snprintf((char *) buf, sizeof(buf), "%c", (char) sym);
-                top->font[(g * 2) + l] = FONT_LATIN1;
-                top->size[(g * 2) + l] = SZ_MEDIUM;
+//                top->font[(g * 2) + l] = FONT_LATIN1;
+//                top->size[(g * 2) + l] = SZ_MEDIUM;
                 switch (buf[0]) {
                 case '.':
                 case ':':
@@ -273,15 +281,15 @@ FindKeysymsByName(XkbDescPtr xkb, char *name, PSState *state, KeyTop *top)
                 case 0255:
                 case 0254:
                 case 0257:
-                    top->size[(g * 2) + l] = SZ_LARGE;
+//                    top->size[(g * 2) + l] = SZ_LARGE;
                     break;
                 }
             }
-            else if (PSNonLatin1Symbol(sym, buf, &font, &sz, state)) {
+/*			else if (PSNonLatin1Symbol(sym, buf, &font, &sz, state)) {
                 top->font[(g * 2) + l] = font;
                 top->size[(g * 2) + l] = sz;
-            }
-            else {
+			}
+*/			else {
                 char *tmp;
 
                 tmp = XKeysymToString(sym);
@@ -289,18 +297,18 @@ FindKeysymsByName(XkbDescPtr xkb, char *name, PSState *state, KeyTop *top)
                     strcpy((char *) buf, tmp);
                 else
                     snprintf((char *) buf, sizeof(buf), "(%ld)", sym);
-                top->font[(g * 2) + l] = FONT_LATIN1;
+/*				top->font[(g * 2) + l] = FONT_LATIN1;
                 if (strlen((char *) buf) < 9)
                     top->size[(g * 2) + l] = SZ_SMALL;
                 else
                     top->size[(g * 2) + l] = SZ_TINY;
-            }
+*/			}
             top->present |= (1 << ((g * 2) + l));
             strncpy(top->label[(g * 2) + l], (char *) buf, LABEL_LEN - 1);
             top->label[(g * 2) + l][LABEL_LEN - 1] = '\0';
         }
-        if (((g == 0) && (top->present & G1LX_MASK) == G1LX_MASK) ||
-            ((g == 1) && (top->present & G2LX_MASK) == G2LX_MASK)) {
+/*		if (((g == 0) && (top->present & G1LX_MASK) == G1LX_MASK) ||
+            ((g == 1) && (top->present & G2LX_MASK) == G2LX_MASK)) {		// if all positions per layer have characters
             KeySym lower, upper;
 
             XConvertCase(topSyms[(g * 2)], &lower, &upper);
@@ -308,7 +316,7 @@ FindKeysymsByName(XkbDescPtr xkb, char *name, PSState *state, KeyTop *top)
                 top->alpha[g] = True;
             }
         }
-    }
+*/	}
     return True;
 }
 
@@ -343,7 +351,7 @@ PSSection(FILE *out, PSState *state, XkbSectionPtr section)
     dpy = xkb->dpy;
     fprintf(out, "%% Begin Section '%s'\n", (section->name != None ?
              XkbAtomGetString(dpy, section-> name) : "NoName"));
-    PSGSave(out, state);
+//	PSGSave(out, state);
     fprintf(out, "%d %d translate\n", section->left, section->top);
     if (section->angle != 0)
         fprintf(out, "%s rotate\n", XkbGeomFPText(section->angle, XkbMessage));
@@ -355,7 +363,7 @@ PSSection(FILE *out, PSState *state, XkbSectionPtr section)
             if (draw->type == XkbDW_Section)
                 PSSection(out, state, draw->u.section);
             else
-                PSDoodad(out, state, draw->u.doodad);
+//	            PSDoodad(out, state, draw->u.doodad); // prefered, but not essential
             draw = draw->next;
         }
         XkbFreeOrderedDrawables(first);
@@ -377,13 +385,13 @@ PSSection(FILE *out, PSState *state, XkbSectionPtr section)
             if (row->vertical) {
                 if (state->args->wantColor) {
                     if (key->color_ndx != state->white) {
-                        PSSetColor(out, state, key->color_ndx);
+//                      PSSetColor(out, state, key->color_ndx);
                         fprintf(out, "true 0 %d %d %s %% %s\n",
                                 row->left, offset,
                                 XkbAtomGetString(dpy, shape->name),
                                 XkbKeyNameText(key->name.name, XkbMessage));
                     }
-                    PSSetColor(out, state, state->black);
+//                  PSSetColor(out, state, state->black);
                 }
                 fprintf(out, "false 0 %d %d %s %% %s\n", row->left, offset,
                         XkbAtomGetString(dpy, shape->name),
@@ -393,12 +401,12 @@ PSSection(FILE *out, PSState *state, XkbSectionPtr section)
             else {
                 if (state->args->wantColor) {
                     if (key->color_ndx != state->white) {
-                        PSSetColor(out, state, key->color_ndx);
+//                      PSSetColor(out, state, key->color_ndx);
                         fprintf(out, "true 0 %d %d %s %% %s\n", offset,
                                 row->top, XkbAtomGetString(dpy, shape->name),
                                 XkbKeyNameText(key->name.name, XkbMessage));
                     }
-                    PSSetColor(out, state, state->black);
+//                  PSSetColor(out, state, state->black);
                 }
                 fprintf(out, "false 0 %d %d %s %% %s\n", offset, row->top,
                         XkbAtomGetString(dpy, shape->name),
@@ -421,8 +429,8 @@ PSSection(FILE *out, PSState *state, XkbSectionPtr section)
             offset = row->left;
         fprintf(out, "%% Begin %s %d labels\n",
                 row->vertical ? "column" : "row", r + 1);
-        PSSetColor(out, state, xkb->geom->label_color->pixel);
-        PSSetFont(out, state, FONT_LATIN1, 12, True);
+//	    PSSetColor(out, state, xkb->geom->label_color->pixel);
+//	    PSSetFont(out, state, FONT_LATIN1, 12, True);
         for (k = 0, key = row->keys; k < row->num_keys; k++, key++) {
             char *name, *name2, buf[30], buf2[30];
             int x, y;
@@ -464,17 +472,17 @@ PSSection(FILE *out, PSState *state, XkbSectionPtr section)
                 }
                 bzero(&top, sizeof(KeyTop));
                 if (name2 != NULL) {
-                    top.present |= G1LX_MASK;
+/*	                top.present |= G1LX_MASK;
                     strncpy(top.label[G1L1], name, LABEL_LEN - 1);
                     top.label[G1L1][LABEL_LEN - 1] = '\0';
                     strncpy(top.label[G1L2], name2, LABEL_LEN - 1);
                     top.label[G1L2][LABEL_LEN - 1] = '\0';
-                }
+*/	            }
                 else if (name != NULL) {
-                    top.present |= CENTER_MASK;
+/*	                top.present |= CENTER_MASK;
                     strncpy(top.label[CENTER], name, LABEL_LEN - 1);
                     top.label[CENTER][LABEL_LEN - 1] = '\0';
-                }
+*/	            }
                 else {
                     fprintf(out, "%% No label for %s\n",
                             XkbKeyNameText(key->name.name, XkbMessage));
@@ -494,10 +502,10 @@ PSSection(FILE *out, PSState *state, XkbSectionPtr section)
             fprintf(out, "%% %s\n", XkbKeyNameText(name, XkbMessage));
             if (state->args->wantKeycodes)
                 kc = XkbFindKeycodeByName(xkb, key->name.name, True);
-            PSLabelKey(out, state, &top, x, y, &bounds, kc, shape->bounds.y2);
+//	        PSLabelKey(out, state, &top, x, y, &bounds, kc, shape->bounds.y2);
         }
     }
-    PSGRestore(out, state);
+//	PSGRestore(out, state);
     return;
 }
 
@@ -553,18 +561,18 @@ GeometryToJSON(FILE *out, XkbFileInfo *pResult, XKBPrintArgs *args)
         }
     }
     for (i = 0; i < state.totalKB; i++) {
-        PSPageSetup(out, &state, dfltBorder);
+//	    PSPageSetup(out, &state, dfltBorder);
         for (draw = first; draw != NULL; draw = draw->next) {
             if (draw->type == XkbDW_Section)
                 PSSection(out, &state, draw->u.section);
             else {
-                PSDoodad(out, &state, draw->u.doodad);
+//	            PSDoodad(out, &state, draw->u.doodad); // temp disabled
             }
         }
-        PSPageTrailer(out, &state);
+//	    PSPageTrailer(out, &state);
         state.args->baseLabelGroup += state.args->nLabelGroups;
     }
     XkbFreeOrderedDrawables(first);
-    PSFileTrailer(out, &state);
+//	PSFileTrailer(out, &state);
     return True;
 }

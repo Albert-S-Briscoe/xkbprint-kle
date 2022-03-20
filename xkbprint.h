@@ -62,7 +62,7 @@ DumpInternalFont(
 );
 
 extern Bool
-GeometryToPostScript(
+GeometryToJSON(
     FILE *              /* out */ ,
     XkbFileInfo *       /* result */ ,
     XKBPrintArgs *      /* args */
