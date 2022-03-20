@@ -42,7 +42,7 @@ XORG_DEFAULT_OPTIONS
 AC_CHECK_FUNCS([asprintf])
 
 # Checks for pkg-config packages
-PKG_CHECK_MODULES(XKBPRINT, [xkbfile x11 xkbcommon xproto >= 7.0.17])
+PKG_CHECK_MODULES(XKBPRINT, [xkbfile x11 xkbcommon xproto >= 7.0.17 json-c])
 
 AC_CONFIG_FILES([
 	Makefile

@@ -311,8 +311,8 @@ PSSection(FILE *out, PSState *state, XkbSectionPtr section)
         while (draw) {
             if (draw->type == XkbDW_Section)
                 PSSection(out, state, draw->u.section);
-            else
-//	            PSDoodad(out, state, draw->u.doodad); // prefered, but not essential
+//	        else
+//	            PSDoodad(out, state, draw->u.doodad); // unimplemented
             draw = draw->next;
         }
         XkbFreeOrderedDrawables(first);
@@ -458,13 +458,93 @@ PSSection(FILE *out, PSState *state, XkbSectionPtr section)
     return;
 }
 
+
+
+char *getcolor(int Color, PSState *state) {
+	XkbGeometryPtr geom = state->geom;
+	static char output[20];
+    int tmp;
+    register int i;
+
+    i = Color;
+    if (Color < geom->num_colors) {
+        XkbColorPtr color = &geom->colors[i];
+        if (uStrCaseEqual(color->spec, "black"))
+        	strcpy(output, "#000000");
+        else if (uStrCaseEqual(color->spec, "white"))
+        	strcpy(output, "#ffffff");
+        else if ((sscanf(color->spec, "grey%d", &tmp) == 1) ||
+                 (sscanf(color->spec, "gray%d", &tmp) == 1) ||
+                 (sscanf(color->spec, "Grey%d", &tmp) == 1) ||
+                 (sscanf(color->spec, "Gray%d", &tmp) == 1)) {
+        	sprintf(output, "#%1$.2x%1$.2x%1$.2x", (int)(((float) tmp) * -2.56 + 256));
+        }
+        else if ((tmp = (uStrCaseEqual(color->spec, "red") * 100)) ||
+             (sscanf(color->spec, "red%d", &tmp) == 1)) {
+        	sprintf(output, "#%1$.2x000000", (int)(((float) tmp) * 2.56));
+		}
+        else if ((tmp = (uStrCaseEqual(color->spec, "green") * 100)) ||
+             (sscanf(color->spec, "green%d", &tmp) == 1)) {
+        	sprintf(output, "#00%1$.2x00", (int)(((float) tmp) * 2.56));
+		}
+        else if ((tmp = (uStrCaseEqual(color->spec, "blue") * 100)) ||
+             (sscanf(color->spec, "blue%d", &tmp) == 1)) {
+        	sprintf(output, "#0000%1$.2x", (int)(((float) tmp) * 2.56));
+        }
+        else
+        	strcpy(output, "#eeeeee"); // ≈ .9
+    }
+    return output;
+}
+
+json_object *metadata(PSState *state) {
+	int p;
+	Bool drawBorder;
+	XkbDrawablePtr draw, first;
+	XkbPropertyPtr prop;
+    json_object *metadata = json_object_new_object();
+
+    json_object_object_add(metadata, "author", json_object_new_string("xkbprint-kle"));
+
+    for (p = 0, prop = state->geom->properties; p < state->geom->num_properties; p++, prop++) {
+		char *name;
+		name = NULL;
+		if ((prop->value != NULL) && (uStrCaseEqual(prop->name, "description"))) {
+            name = prop->value;
+		    json_object_object_add(metadata, "name", json_object_new_string(name));
+            break;
+        }
+    }
+
+	first = XkbGetOrderedDrawables(state->geom, NULL);
+
+	for (draw = first, drawBorder = True; draw != NULL; draw = draw->next) { // check if default border/background should be drawn.
+        if ((draw->type != XkbDW_Section) && ((draw->u.doodad->any.type == XkbOutlineDoodad) || (draw->u.doodad->any.type == XkbSolidDoodad))) {
+            char *name;
+            name = XkbAtomGetString(state->dpy, draw->u.doodad->any.name);
+            if ((name != NULL) && (uStrCaseEqual(name, "edges"))) {
+                drawBorder = False;
+                break;
+            }
+        }
+    }
+	if (drawBorder && (state->args->wantColor)) {
+	    json_object_object_add(metadata, "backcolor", json_object_new_string(getcolor(state->geom->base_color->pixel, state)));
+    }
+
+    // more metadata?
+    return metadata;
+}
+
 Bool
 GeometryToJSON(FILE *out, XkbFileInfo *pResult, XKBPrintArgs *args)
 {
     XkbDrawablePtr first, draw;
     PSState state;
-    Bool dfltBorder;
     int i;
+
+    json_object *keyboardjson = json_object_new_array();
+
 
     if ((!pResult) || (!pResult->xkb) || (!pResult->xkb->geom))
         return False;
@@ -493,35 +573,26 @@ GeometryToJSON(FILE *out, XkbFileInfo *pResult, XKBPrintArgs *args)
     if (args->nKBPerPage != 0)
         state.kbPerPage = args->nKBPerPage;
 
+    json_object_array_add(keyboardjson, metadata(&state)); // add metadata to main array
+
 //    PSProlog(out, &state);
-    first = XkbGetOrderedDrawables(state.geom, NULL);
 
-    for (draw = first, dfltBorder = True; draw != NULL; draw = draw->next) {
-        if ((draw->type != XkbDW_Section) &&
-            ((draw->u.doodad->any.type == XkbOutlineDoodad) ||
-             (draw->u.doodad->any.type == XkbSolidDoodad))) {
-            char *name;
+	first = XkbGetOrderedDrawables(state.geom, NULL);
 
-            name = XkbAtomGetString(state.dpy, draw->u.doodad->any.name);
-            if ((name != NULL) && (uStrCaseEqual(name, "edges"))) {
-                dfltBorder = False;
-                break;
-            }
-        }
-    }
     for (i = 0; i < state.totalKB; i++) {
-//	    PSPageSetup(out, &state, dfltBorder);
         for (draw = first; draw != NULL; draw = draw->next) {
             if (draw->type == XkbDW_Section)
-                PSSection(out, &state, draw->u.section);
-            else {
+                PSSection(out, &state, draw->u.section); // the actual keycodes and stuff
+//            else {
 //	            PSDoodad(out, &state, draw->u.doodad); // temp disabled
-            }
+//            }
         }
 //	    PSPageTrailer(out, &state);
         state.args->baseLabelGroup += state.args->nLabelGroups;
     }
     XkbFreeOrderedDrawables(first);
+
 //	PSFileTrailer(out, &state);
+	fprintf(stderr, "%s\n", json_object_to_json_string(keyboardjson));
     return True;
 }
