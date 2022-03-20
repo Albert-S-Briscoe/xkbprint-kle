@@ -109,6 +109,7 @@ Usage(int argc, char *argv[])
             "-mono         Ignore colors from geometry (default)\n"
             "-n <num>      Print <num> copies (default 1)\n"
             "-nkg <num>    Number of groups to print on each key\n"
+            "-nkl <num>    Number of layers to print on each key\n"
             "-nokc         Don't print keycodes, even if possible\n"
             "-npk <num>    Number of keyboards to print on each page\n"
             "-ntg <num>    Total number of groups to print\n"
@@ -143,6 +144,7 @@ parseArgs(int argc, char *argv[])
     args.label = LABEL_AUTO;
     args.baseLabelGroup = 0;
     args.nLabelGroups = 1;
+    args.nLabelLayers = 2;
     args.nTotalGroups = 0;
     args.nKBPerPage = 0;
     args.labelLevel = 0;
@@ -313,6 +315,21 @@ parseArgs(int argc, char *argv[])
             }
             else
                 args.nLabelGroups = tmp;
+        }
+        else if (strcmp(argv[i], "-nkl") == 0) {
+            int tmp;
+
+            if (++i >= argc) {
+                uWarning("Number of layers per key not specified\n");
+                uAction("Trailing \"-nkl\" option ignored\n");
+            }
+            else if ((sscanf(argv[i], "%i", &tmp) != 1) || (tmp < 1) ||
+                     (tmp > 64)) {
+                uWarning("Layers per key must be in the range 1..64\n");
+                uAction("Illegal number of layers %d ignored\n", tmp);
+            }
+            else
+                args.nLabelLayers = tmp;
         }
         else if (strcmp(argv[i], "-npk") == 0) {
             int tmp;

@@ -43,6 +43,7 @@ typedef struct _XKBPrintArgs {
     int         label;
     int         baseLabelGroup;
     int         nLabelGroups;
+    int			nLabelLayers;
     int         nTotalGroups;
     int         nKBPerPage;
     int         labelLevel;

@@ -68,7 +68,7 @@ typedef struct {
 // PSNonLatin1Symbol() might be mildly interesting
 
 static KeySym
-CheckSymbolAlias(KeySym sym, PSState *state)
+CheckSymbolAlias(KeySym sym)
 {
     if (XkbKSIsKeypad(sym)) {
         if ((sym >= XK_KP_0) && (sym <= XK_KP_9))
@@ -178,9 +178,7 @@ CheckSymbolAlias(KeySym sym, PSState *state)
     return sym;
 }
 
-static Bool
-FindKeysymsByName(XkbDescPtr xkb, char *name, PSState *state, KeyTop *top)
-{
+static Bool FindKeysymsByName(XkbDescPtr xkb, char *name, PSState *state, KeyTop *top) {
     static unsigned char buf[30];
     int kc;
     KeySym sym, *syms, topSyms[NLABELS];
@@ -222,10 +220,13 @@ FindKeysymsByName(XkbDescPtr xkb, char *name, PSState *state, KeyTop *top)
             break;
         }
     }
+
+    fprintf(stderr, "Current keycode: %d\n", kc);
+
     for (g = 0; g < state->args->nLabelGroups; g++) {
         if ((eG + g) >= nG)
             continue;
-        for (l = 0; l < 2; l++) {
+        for (l = 0; l < state->args->nLabelLayers; l++) {
             int font, sz;
             unsigned char utf8[30];
 
@@ -234,79 +235,27 @@ FindKeysymsByName(XkbDescPtr xkb, char *name, PSState *state, KeyTop *top)
             sym = syms[((eG + g) * XkbKeyGroupsWidth(xkb, kc)) + (level + l)];
 
             if (state->args->wantSymbols != NO_SYMBOLS)
-                sym = CheckSymbolAlias(sym, state);
+                sym = CheckSymbolAlias(sym);
             topSyms[(g * 2) + l] = sym;
 
             utf8[0] = '\0';
             xkb_keysym_to_utf8(sym, utf8, 30);
-            if ((utf8[0] >= '\x20') && (utf8[0] != '\x7f')) {
-            	fprintf(stderr, "Keycode text: \"%s\"\n", utf8);
+            
+            if ((utf8[0] & '\xE0') && (utf8[0] != '\x7f')) { // exclude ascii control codes and empty strings
+                strcpy((char *) buf, utf8);
            	}
-
-/*            if (PSKeycapsSymbol(sym, buf, &font, &sz, state)) {
-                top->font[(g * 2) + l] = font;
-                top->size[(g * 2) + l] = sz;
-            }
-            else*/ if (((sym & (~0xffUL)) == 0) && isprint(sym) && (!isspace(sym))) {
-                if (sym == '(')
-                    snprintf((char *) buf, sizeof(buf), "\\(");
-                else if (sym == ')')
-                    snprintf((char *) buf, sizeof(buf), "\\)");
-                else if (sym == '\\')
-                    snprintf((char *) buf, sizeof(buf), "\\\\");
-                else
-                    snprintf((char *) buf, sizeof(buf), "%c", (char) sym);
-//                top->font[(g * 2) + l] = FONT_LATIN1;
-//                top->size[(g * 2) + l] = SZ_MEDIUM;
-                switch (buf[0]) {
-                case '.':
-                case ':':
-                case ',':
-                case ';':
-                case '\'':
-                case '"':
-                case '`':
-                case '~':
-                case '^':
-                case 0250:
-                case 0270:
-                case 0267:
-                case 0260:
-                case 0252:
-                case 0272:
-                case 0271:
-                case 0262:
-                case 0263:
-                case 0264:
-                case 0255:
-                case 0254:
-                case 0257:
-//                    top->size[(g * 2) + l] = SZ_LARGE;
-                    break;
-                }
-            }
-/*			else if (PSNonLatin1Symbol(sym, buf, &font, &sz, state)) {
-                top->font[(g * 2) + l] = font;
-                top->size[(g * 2) + l] = sz;
-			}
-*/			else {
+           	else {
                 char *tmp;
 
-                tmp = XKeysymToString(sym);
+                tmp = XKeysymToString(sym); // full keysym name (eg "Aacute" or "ISO_Level3_Shift" or "Backspace")
                 if (tmp != NULL)
                     strcpy((char *) buf, tmp);
                 else
-                    snprintf((char *) buf, sizeof(buf), "(%ld)", sym);
-/*				top->font[(g * 2) + l] = FONT_LATIN1;
-                if (strlen((char *) buf) < 9)
-                    top->size[(g * 2) + l] = SZ_SMALL;
-                else
-                    top->size[(g * 2) + l] = SZ_TINY;
-*/			}
-            top->present |= (1 << ((g * 2) + l));
-            strncpy(top->label[(g * 2) + l], (char *) buf, LABEL_LEN - 1);
-            top->label[(g * 2) + l][LABEL_LEN - 1] = '\0';
+                    snprintf((char *) buf, sizeof(buf), "(%ld)", sym); // last resort: print keysym as a number
+           	}
+			fprintf(stderr, "    G%dL%d text: \"%s\"\n", g, l, buf);
         }
+
 /*		if (((g == 0) && (top->present & G1LX_MASK) == G1LX_MASK) ||
             ((g == 1) && (top->present & G2LX_MASK) == G2LX_MASK)) {		// if all positions per layer have characters
             KeySym lower, upper;
@@ -315,8 +264,8 @@ FindKeysymsByName(XkbDescPtr xkb, char *name, PSState *state, KeyTop *top)
             if ((topSyms[(g * 2)] == lower) && (topSyms[(g * 2) + 1] == upper)) {
                 top->alpha[g] = True;
             }
-        }
-*/	}
+        }*/
+    }
     return True;
 }
 
@@ -350,7 +299,7 @@ PSSection(FILE *out, PSState *state, XkbSectionPtr section)
     xkb = state->xkb;
     dpy = xkb->dpy;
     fprintf(out, "%% Begin Section '%s'\n", (section->name != None ?
-             XkbAtomGetString(dpy, section-> name) : "NoName"));
+            XkbAtomGetString(dpy, section-> name) : "NoName"));
 //	PSGSave(out, state);
     fprintf(out, "%d %d translate\n", section->left, section->top);
     if (section->angle != 0)
