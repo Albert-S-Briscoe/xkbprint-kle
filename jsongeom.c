@@ -30,6 +30,13 @@
 #include "isokeys.h"
 
 typedef struct {
+	float				x;
+	float				y;
+	float				height;
+	char				color[8];
+} JSONState;
+
+typedef struct {
     Display *           dpy;
     XkbDescPtr          xkb;
     XkbGeometryPtr      geom;
@@ -44,6 +51,7 @@ typedef struct {
     int                 x1, y1;
     int                 x2, y2;
     XKBPrintArgs *      args;
+    JSONState			lastkey;
 } PSState;
 
 #define NLABELS     5
@@ -178,12 +186,51 @@ CheckSymbolAlias(KeySym sym)
     return sym;
 }
 
-static Bool FindKeysymsByName(XkbDescPtr xkb, char *name, PSState *state, KeyTop *top) {
+static char *getcolor(int Color, PSState *state) {
+	XkbGeometryPtr geom = state->geom;
+	static char output[20];
+    int tmp;
+    register int i;
+
+    i = Color;
+    if (Color < geom->num_colors) {
+        XkbColorPtr color = &geom->colors[i];
+        if (uStrCaseEqual(color->spec, "black"))
+        	strcpy(output, "#000000");
+        else if (uStrCaseEqual(color->spec, "white"))
+        	strcpy(output, "#ffffff");
+        else if ((sscanf(color->spec, "grey%d", &tmp) == 1) ||
+                 (sscanf(color->spec, "gray%d", &tmp) == 1) ||
+                 (sscanf(color->spec, "Grey%d", &tmp) == 1) ||
+                 (sscanf(color->spec, "Gray%d", &tmp) == 1)) {
+        	sprintf(output, "#%1$.2x%1$.2x%1$.2x", (int)(((float) tmp) * -2.56 + 256));
+        }
+        else if ((tmp = (uStrCaseEqual(color->spec, "red") * 100)) ||
+             (sscanf(color->spec, "red%d", &tmp) == 1)) {
+        	sprintf(output, "#%1$.2x000000", (int)(((float) tmp) * 2.56));
+		}
+        else if ((tmp = (uStrCaseEqual(color->spec, "green") * 100)) ||
+             (sscanf(color->spec, "green%d", &tmp) == 1)) {
+        	sprintf(output, "#00%1$.2x00", (int)(((float) tmp) * 2.56));
+		}
+        else if ((tmp = (uStrCaseEqual(color->spec, "blue") * 100)) ||
+             (sscanf(color->spec, "blue%d", &tmp) == 1)) {
+        	sprintf(output, "#0000%1$.2x", (int)(((float) tmp) * 2.56));
+        }
+        else
+        	strcpy(output, "#eeeeee"); // ≈ .9
+    }
+    return output;
+}
+
+static json_object *FindKeysymsByName(XkbDescPtr xkb, char *name, PSState *state, KeyTop *top) {
     static unsigned char buf[30];
     int kc;
     KeySym sym, *syms, topSyms[NLABELS];
     int level, group;
     int eG, nG, gI, l, g;
+    json_object *output;
+    char keycaps[4][64][30]; // array of strings to store keycap text in. 4 groups, 64 levels is the max in xkb
 
     bzero(top, sizeof(KeyTop));
     kc = XkbFindKeycodeByName(xkb, name, True);
@@ -221,13 +268,13 @@ static Bool FindKeysymsByName(XkbDescPtr xkb, char *name, PSState *state, KeyTop
         }
     }
 
-    fprintf(stderr, "Current keycode: %d\n", kc);
+//	fprintf(stderr, "Current keycode: %d\n", kc);
 
     for (g = 0; g < state->args->nLabelGroups; g++) {
         if ((eG + g) >= nG)
             continue;
         for (l = 0; l < state->args->nLabelLayers; l++) {
-            int font, sz;
+//            int font, sz;
             unsigned char utf8[30];
 
             if (level + l >= XkbKeyGroupWidth(xkb, kc, (eG + g)))
@@ -240,7 +287,7 @@ static Bool FindKeysymsByName(XkbDescPtr xkb, char *name, PSState *state, KeyTop
 
             utf8[0] = '\0';
             xkb_keysym_to_utf8(sym, utf8, 30);
-            
+
             if ((utf8[0] & '\xE0') && (utf8[0] != '\x7f')) { // exclude ascii control codes and empty strings
                 strcpy((char *) buf, utf8);
            	}
@@ -253,7 +300,12 @@ static Bool FindKeysymsByName(XkbDescPtr xkb, char *name, PSState *state, KeyTop
                 else
                     snprintf((char *) buf, sizeof(buf), "(%ld)", sym); // last resort: print keysym as a number
            	}
-			fprintf(stderr, "    G%dL%d text: \"%s\"\n", g, l, buf);
+//			fprintf(stderr, "    G%dL%d text: \"%s\"\n", g, l, buf);
+//			if (g == 0 && l == 0) {
+//				output = json_object_new_string(buf);
+//				return output;
+//			}
+			strcpy(keycaps[g][l], buf);
         }
 
 /*		if (((g == 0) && (top->present & G1LX_MASK) == G1LX_MASK) ||
@@ -265,8 +317,10 @@ static Bool FindKeysymsByName(XkbDescPtr xkb, char *name, PSState *state, KeyTop
                 top->alpha[g] = True;
             }
         }*/
-    }
-    return True;
+	}
+	output = json_object_new_string(keycaps[0][0]);
+//	output = json_object_new_string("no");
+	return output;
 }
 
 // PSDrawLabel(FILE *out, const char *label, int x, int y, int w, int h) just for the parameters
@@ -287,10 +341,8 @@ static Bool FindKeysymsByName(XkbDescPtr xkb, char *name, PSState *state, KeyTop
     }
 */
 
-// I think this is important?
-static void
-PSSection(FILE *out, PSState *state, XkbSectionPtr section)
-{
+static json_object *PSSection(FILE *out, PSState *state, XkbSectionPtr section) {
+	json_object *sectionjson = json_object_new_array();
     int r, offset;
     XkbRowPtr row;
     Display *dpy;
@@ -298,12 +350,12 @@ PSSection(FILE *out, PSState *state, XkbSectionPtr section)
 
     xkb = state->xkb;
     dpy = xkb->dpy;
-    fprintf(out, "%% Begin Section '%s'\n", (section->name != None ?
-            XkbAtomGetString(dpy, section-> name) : "NoName"));
+//    fprintf(out, "%% Begin Section '%s'\n", (section->name != None ?
+//            XkbAtomGetString(dpy, section-> name) : "NoName"));
 //	PSGSave(out, state);
-    fprintf(out, "%d %d translate\n", section->left, section->top);
-    if (section->angle != 0)
-        fprintf(out, "%s rotate\n", XkbGeomFPText(section->angle, XkbMessage));
+//    fprintf(out, "%d %d translate\n", section->left, section->top);
+//    if (section->angle != 0)
+//        fprintf(out, "%s rotate\n", XkbGeomFPText(section->angle, XkbMessage));
     if (section->doodads) {
         XkbDrawablePtr first, draw;
 
@@ -317,23 +369,50 @@ PSSection(FILE *out, PSState *state, XkbSectionPtr section)
         }
         XkbFreeOrderedDrawables(first);
     }
+    fprintf(stderr, "Rows: %d\n", section->num_rows);
     for (r = 0, row = section->rows; r < section->num_rows; r++, row++) {
-        int k;
+		json_object *rowjson = json_object_new_array();
+	    fprintf(stderr, "  Row: %d\n", r);
+        int k, kc = 0;
         XkbKeyPtr key;
         XkbShapePtr shape;
+        XkbBoundsRec bounds;
 
-        if (row->vertical)
+        if (row->vertical) {
+		    fprintf(stderr, "    vertical row\n");
             offset = row->top;
-        else
+        }
+        else {
+		    fprintf(stderr, "    regular row\n");
             offset = row->left;
-        fprintf(out, "%% Begin %s %d\n", row->vertical ? "column" : "row",
-                r + 1);
+        }
+//        fprintf(out, "%% Begin %s %d\n", row->vertical ? "column" : "row",
+//                r + 1);
+
+//	    PSSetColor(out, state, xkb->geom->label_color->pixel);
+//	    PSSetFont(out, state, FONT_LATIN1, 12, True);
+
+	    fprintf(stderr, "    keys: %d\n", row->num_keys);
+
         for (k = 0, key = row->keys; k < row->num_keys; k++, key++) {
+            char *name, *name2, buf[30], buf2[30];
+//            int x, y;
+            KeyTop top;
+            char *keycolor;
+			int flag = 0;
+
+			json_object *properties = json_object_new_object();
             shape = XkbKeyShape(xkb->geom, key);
+            XkbComputeShapeTop(shape, &bounds);
             offset += key->gap;
+            name = name2 = NULL;
+
+		    fprintf(stderr, "      key: %d\n", k);
+
             if (row->vertical) {
-                if (state->args->wantColor) {
+/*	            if (state->args->wantColor) {
                     if (key->color_ndx != state->white) {
+                    	fprintf(stderr, "        color: %s\n", getcolor(key->color_ndx, state));
 //                      PSSetColor(out, state, key->color_ndx);
                         fprintf(out, "true 0 %d %d %s %% %s\n",
                                 row->left, offset,
@@ -346,54 +425,67 @@ PSSection(FILE *out, PSState *state, XkbSectionPtr section)
                         XkbAtomGetString(dpy, shape->name),
                         XkbKeyNameText(key->name.name, XkbMessage));
                 offset += shape->bounds.y2;
-            }
-            else {
+*/	        }
+	        else {
+			    fprintf(stderr, "        x: %f y: %f\n", state->lastkey.x, state->lastkey.y);
                 if (state->args->wantColor) {
                     if (key->color_ndx != state->white) {
+                    	keycolor = getcolor(key->color_ndx, state);
+                    	fprintf(stderr, "        color: %s\n", keycolor);
+
+                    	if (strcmp(keycolor, state->lastkey.color) != 0) {
+                    		json_object_object_add(properties, "c", json_object_new_string(keycolor));
+                    		strcpy(state->lastkey.color, keycolor);
+                    		flag = 1;
+						}
 //                      PSSetColor(out, state, key->color_ndx);
-                        fprintf(out, "true 0 %d %d %s %% %s\n", offset,
-                                row->top, XkbAtomGetString(dpy, shape->name),
-                                XkbKeyNameText(key->name.name, XkbMessage));
+//                        fprintf(out, "true 0 %d %d %s %% %s\n", offset, row->top, XkbAtomGetString(dpy, shape->name), XkbKeyNameText(key->name.name, XkbMessage));
                     }
 //                  PSSetColor(out, state, state->black);
                 }
-                fprintf(out, "false 0 %d %d %s %% %s\n", offset, row->top,
-                        XkbAtomGetString(dpy, shape->name),
-                        XkbKeyNameText(key->name.name, XkbMessage));
+//                fprintf(out, "false 0 %d %d %s %% %s\n", offset, row->top, XkbAtomGetString(dpy, shape->name), XkbKeyNameText(key->name.name, XkbMessage));
+
+	            if (state->args->label == LABEL_SYMBOLS) {
+				    float yoffset = 0;
+					if (k == 0) {
+						yoffset = (double) (section->top + row->top) / 190.0;
+						yoffset -= state->lastkey.y;
+						yoffset -= 1.0;
+						json_object_object_add(properties, "y", json_object_new_double((double) yoffset));
+						json_object_object_add(properties, "x", json_object_new_double(((double) section->left) / 190.0));
+					    fprintf(stderr, "      left: %d\n", section->left);
+						flag = 1;
+					}
+					if (key->gap && (k != 0)) {
+						json_object_object_add(properties, "x", json_object_new_double((double) key->gap / 190.0));
+						flag = 1;
+					}
+					if (shape->bounds.x2 != 190) {
+						json_object_object_add(properties, "w", json_object_new_double((double) shape->bounds.x2 / 190.0));
+						flag = 1;
+					}
+					if (shape->bounds.y2 != 190) {
+						json_object_object_add(properties, "h", json_object_new_double((double) shape->bounds.y2 / 190.0));
+						flag = 1;
+					}
+					if (flag == 1) {
+						json_object_array_add(rowjson, properties);
+					}
+					json_object_array_add(rowjson, FindKeysymsByName(xkb, key->name.name, state, &top));
+
+				    fprintf(stderr, "        outline: %d,%d,%d,%d\n", shape->outlines->points[0].x, shape->outlines->points[0].y, shape->outlines->points[1].x, shape->outlines->points[1].y);
+				    fprintf(stderr, "        bounds: %d,%d,%d,%d\n", shape->bounds.x1, shape->bounds.y1, shape->bounds.x2, shape->bounds.y2);
+				    fprintf(stderr, "        gap: %d\n", key->gap);
+			        state->lastkey.height = ((double) shape->bounds.y2 / 190.0);
+			        state->lastkey.y = ((double) (row->top + section->top) / 190.0);
+//			        state->lastkey.x = ((double) row->left / 190.0);
+	            }
+
                 offset += shape->bounds.x2;
+//                state->lastkey.x += ((float)shape->bounds.x2 / 190.0);
             }
-        }
-    }
-    for (r = 0, row = section->rows; r < section->num_rows; r++, row++) {
-        int k, kc = 0;
-        XkbKeyPtr key;
-        XkbShapePtr shape;
-        XkbBoundsRec bounds;
 
-        if (state->args->label == LABEL_NONE)
-            break;
-        if (row->vertical)
-            offset = row->top;
-        else
-            offset = row->left;
-        fprintf(out, "%% Begin %s %d labels\n",
-                row->vertical ? "column" : "row", r + 1);
-//	    PSSetColor(out, state, xkb->geom->label_color->pixel);
-//	    PSSetFont(out, state, FONT_LATIN1, 12, True);
-        for (k = 0, key = row->keys; k < row->num_keys; k++, key++) {
-            char *name, *name2, buf[30], buf2[30];
-            int x, y;
-            KeyTop top;
-
-            shape = XkbKeyShape(xkb->geom, key);
-            XkbComputeShapeTop(shape, &bounds);
-            offset += key->gap;
-            name = name2 = NULL;
             if (state->args->label == LABEL_SYMBOLS) {
-                if (!FindKeysymsByName(xkb, key->name.name, state, &top)) {
-                    fprintf(out, "%% No label for %s\n",
-                            XkbKeyNameText(key->name.name, XkbMessage));
-                }
             }
             else {
                 char *olKey;
@@ -419,6 +511,7 @@ PSSection(FILE *out, PSState *state, XkbSectionPtr section)
                                  XkbFindKeycodeByName(xkb, olKey, True));
                     }
                 }
+
                 bzero(&top, sizeof(KeyTop));
                 if (name2 != NULL) {
 /*	                top.present |= G1LX_MASK;
@@ -433,71 +526,36 @@ PSSection(FILE *out, PSState *state, XkbSectionPtr section)
                     top.label[CENTER][LABEL_LEN - 1] = '\0';
 */	            }
                 else {
-                    fprintf(out, "%% No label for %s\n",
-                            XkbKeyNameText(key->name.name, XkbMessage));
+//                    fprintf(out, "%% No label for %s\n",
+//                            XkbKeyNameText(key->name.name, XkbMessage));
                 }
             }
             if (row->vertical) {
-                x = row->left;
-                y = offset;
+//                x = row->left;
+//                y = offset;
                 offset += shape->bounds.y2;
             }
             else {
-                x = offset;
-                y = row->top;
+//                x = offset;
+//                y = row->top;
                 offset += shape->bounds.x2;
             }
             name = key->name.name;
-            fprintf(out, "%% %s\n", XkbKeyNameText(name, XkbMessage));
+//            fprintf(out, "%% %s\n", XkbKeyNameText(name, XkbMessage));
             if (state->args->wantKeycodes)
                 kc = XkbFindKeycodeByName(xkb, key->name.name, True);
 //	        PSLabelKey(out, state, &top, x, y, &bounds, kc, shape->bounds.y2);
         }
+		json_object_array_add(sectionjson, rowjson);
+
+        state->lastkey.x = 0;
     }
 //	PSGRestore(out, state);
-    return;
+    return sectionjson;
 }
 
 
-
-char *getcolor(int Color, PSState *state) {
-	XkbGeometryPtr geom = state->geom;
-	static char output[20];
-    int tmp;
-    register int i;
-
-    i = Color;
-    if (Color < geom->num_colors) {
-        XkbColorPtr color = &geom->colors[i];
-        if (uStrCaseEqual(color->spec, "black"))
-        	strcpy(output, "#000000");
-        else if (uStrCaseEqual(color->spec, "white"))
-        	strcpy(output, "#ffffff");
-        else if ((sscanf(color->spec, "grey%d", &tmp) == 1) ||
-                 (sscanf(color->spec, "gray%d", &tmp) == 1) ||
-                 (sscanf(color->spec, "Grey%d", &tmp) == 1) ||
-                 (sscanf(color->spec, "Gray%d", &tmp) == 1)) {
-        	sprintf(output, "#%1$.2x%1$.2x%1$.2x", (int)(((float) tmp) * -2.56 + 256));
-        }
-        else if ((tmp = (uStrCaseEqual(color->spec, "red") * 100)) ||
-             (sscanf(color->spec, "red%d", &tmp) == 1)) {
-        	sprintf(output, "#%1$.2x000000", (int)(((float) tmp) * 2.56));
-		}
-        else if ((tmp = (uStrCaseEqual(color->spec, "green") * 100)) ||
-             (sscanf(color->spec, "green%d", &tmp) == 1)) {
-        	sprintf(output, "#00%1$.2x00", (int)(((float) tmp) * 2.56));
-		}
-        else if ((tmp = (uStrCaseEqual(color->spec, "blue") * 100)) ||
-             (sscanf(color->spec, "blue%d", &tmp) == 1)) {
-        	sprintf(output, "#0000%1$.2x", (int)(((float) tmp) * 2.56));
-        }
-        else
-        	strcpy(output, "#eeeeee"); // ≈ .9
-    }
-    return output;
-}
-
-json_object *metadata(PSState *state) {
+static json_object *metadata(PSState *state) {
 	int p;
 	Bool drawBorder;
 	XkbDrawablePtr draw, first;
@@ -558,6 +616,8 @@ GeometryToJSON(FILE *out, XkbFileInfo *pResult, XKBPrintArgs *args)
     state.kbPerPage = 1;
     state.x1 = state.y1 = state.x2 = state.y2 = 0;
     state.args = args;
+    state.lastkey.x = 0;
+    state.lastkey.y = -1.0;
 
     if ((args->label == LABEL_SYMBOLS) && (pResult->xkb->ctrls)) {
         if (args->nTotalGroups == 0)
@@ -579,20 +639,25 @@ GeometryToJSON(FILE *out, XkbFileInfo *pResult, XKBPrintArgs *args)
 
 	first = XkbGetOrderedDrawables(state.geom, NULL);
 
-    for (i = 0; i < state.totalKB; i++) {
+//    for (i = 0; i < state.totalKB; i++) {
         for (draw = first; draw != NULL; draw = draw->next) {
-            if (draw->type == XkbDW_Section)
-                PSSection(out, &state, draw->u.section); // the actual keycodes and stuff
+            if (draw->type == XkbDW_Section) {
+                //json_object_array_add(keyboardjson, PSSection(out, &state, draw->u.section)); // the actual keycodes and stuff
+                json_object *tempobject = PSSection(out, &state, draw->u.section);
+                for (i = 0; i < json_object_array_length(tempobject); i++) {
+                	json_object_array_add(keyboardjson, json_object_array_get_idx(tempobject, i));
+				}
+			}
 //            else {
 //	            PSDoodad(out, &state, draw->u.doodad); // temp disabled
 //            }
         }
 //	    PSPageTrailer(out, &state);
         state.args->baseLabelGroup += state.args->nLabelGroups;
-    }
+//    }
     XkbFreeOrderedDrawables(first);
 
 //	PSFileTrailer(out, &state);
-	fprintf(stderr, "%s\n", json_object_to_json_string(keyboardjson));
+	fprintf(out, "%s\n", json_object_to_json_string(keyboardjson));
     return True;
 }
