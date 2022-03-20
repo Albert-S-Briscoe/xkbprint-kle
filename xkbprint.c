@@ -39,6 +39,8 @@
 #include <X11/extensions/XKBfile.h>
 #include <X11/keysym.h>
 
+#include <xkbcommon/xkbcommon.h>
+
 #if defined(sgi)
 #include <malloc.h>
 #endif
