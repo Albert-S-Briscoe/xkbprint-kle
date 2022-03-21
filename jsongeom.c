@@ -33,7 +33,8 @@ typedef struct {
 	float				x;
 	float				y;
 	float				height;
-	char				color[8];
+	char				baseColor[8];
+	char				textColor[8];
 } JSONState;
 
 typedef struct {
@@ -231,9 +232,19 @@ static json_object *FindKeysymsByName(XkbDescPtr xkb, char *name, PSState *state
     int eG, nG, gI, l, g;
     json_object *output;
     char keycaps[4][64][30]; // array of strings to store keycap text in. 4 groups, 64 levels is the max in xkb
+    int groupLayers[4]; // remember how many layers each group has
+    char formattedstr[256]; // used to arrange text on the keycaps
+    Bool duplicate = False; // probably a better way to do this
+    int groups = 0; // keep track of number of groups
 
     bzero(top, sizeof(KeyTop));
     kc = XkbFindKeycodeByName(xkb, name, True);
+    for (int i = 0; i < 4; i++) {
+    	for (int a = 0; a < 64; a++) {
+    		keycaps[i][a][0] = '\0';
+    	}
+    	groupLayers[i] = 0;
+    }
     if (state->args != NULL) {
         level = state->args->labelLevel;
         group = state->args->baseLabelGroup;
@@ -300,25 +311,66 @@ static json_object *FindKeysymsByName(XkbDescPtr xkb, char *name, PSState *state
                 else
                     snprintf((char *) buf, sizeof(buf), "(%ld)", sym); // last resort: print keysym as a number
            	}
-//			fprintf(stderr, "    G%dL%d text: \"%s\"\n", g, l, buf);
+			fprintf(stderr, "        G%dL%d text: \"%s\"\n", g, l, buf);
 //			if (g == 0 && l == 0) {
 //				output = json_object_new_string(buf);
 //				return output;
 //			}
 			strcpy(keycaps[g][l], buf);
+			groupLayers[g] += 1;
         }
 
-/*		if (((g == 0) && (top->present & G1LX_MASK) == G1LX_MASK) ||
-            ((g == 1) && (top->present & G2LX_MASK) == G2LX_MASK)) {		// if all positions per layer have characters
+        // not sure where to put this, here should be ok ish
+        // remove duplicate labels
+		if (strcmp(keycaps[g][0], keycaps[g][1]) == 0) {
+        	keycaps[g][1][0] = '\0';
+        	duplicate = True;
+		}
+		if (strcmp(keycaps[g][0], keycaps[g][2]) == 0) {
+			keycaps[g][2][0] = '\0';
+        }
+
+//		if (((g == 0) && (top->present & G1LX_MASK) == G1LX_MASK) ||
+//	        ((g == 1) && (top->present & G2LX_MASK) == G2LX_MASK)) {		// if all positions per layer have characters
+		if ((g == 0 || g == 1) && (groupLayers[g] > 1) && !duplicate) {
             KeySym lower, upper;
 
             XConvertCase(topSyms[(g * 2)], &lower, &upper);
             if ((topSyms[(g * 2)] == lower) && (topSyms[(g * 2) + 1] == upper)) {
-                top->alpha[g] = True;
+				fprintf(stderr, "        alpha\n", groups);
+            	keycaps[g][0][0] = '\0';
+//	            top->alpha[g] = True;
             }
-        }*/
+	    }
+        groups += 1;
 	}
-	output = json_object_new_string(keycaps[0][0]);
+/*
+keycap text position order
+0	8	2
+6	9	7
+1	10	3
+---------
+4	11	5
+*/
+	fprintf(stderr, "        groups: %d\n", groups);
+	if (groups > 1) {
+		// display 2 groups side by side, ISO style. Enable by option in the future.
+//		if (groupLayers[0] > 2 || groupLayers[1] > 2) {
+			// display 3 layers on keycap, ISO style
+			sprintf(formattedstr, "%s\n%s\n%s\n%s\n\n\n%s\n%s",
+					keycaps[0][1], keycaps[0][2], keycaps[1][1], keycaps[1][2], keycaps[0][0], keycaps[1][0]);
+//		}
+//		else {
+//			sprintf(formattedstr, "%s\n%s\n\n\n\n\n%s
+//		}
+	}
+	else {
+//		if (groupLayers[0] > 2) {
+			sprintf(formattedstr, "%s\n%s\n\n\n\n\n%s", keycaps[0][1], keycaps[0][2], keycaps[0][0]);
+//		}
+//		else if (groupLayers[0] == 1)
+	}
+	output = json_object_new_string(formattedstr);
 //	output = json_object_new_string("no");
 	return output;
 }
@@ -399,6 +451,7 @@ static json_object *PSSection(FILE *out, PSState *state, XkbSectionPtr section) 
 //            int x, y;
             KeyTop top;
             char *keycolor;
+            char *textcolor;
 			int flag = 0;
 
 			json_object *properties = json_object_new_object();
@@ -433,10 +486,15 @@ static json_object *PSSection(FILE *out, PSState *state, XkbSectionPtr section) 
                     	keycolor = getcolor(key->color_ndx, state);
                     	fprintf(stderr, "        color: %s\n", keycolor);
 
-                    	if (strcmp(keycolor, state->lastkey.color) != 0) {
+                    	if (strcmp(keycolor, state->lastkey.baseColor) != 0) {
                     		json_object_object_add(properties, "c", json_object_new_string(keycolor));
-                    		strcpy(state->lastkey.color, keycolor);
+                    		strcpy(state->lastkey.baseColor, keycolor);
                     		flag = 1;
+						}
+						textcolor = getcolor(state->geom->label_color->pixel, state); // never changes, this function needs to be restructured
+						if (strcmp(textcolor, state->lastkey.textColor) !=0) {
+							json_object_object_add(properties, "t", json_object_new_string(textcolor));
+							strcpy(state->lastkey.textColor, textcolor);
 						}
 //                      PSSetColor(out, state, key->color_ndx);
 //                        fprintf(out, "true 0 %d %d %s %% %s\n", offset, row->top, XkbAtomGetString(dpy, shape->name), XkbKeyNameText(key->name.name, XkbMessage));
