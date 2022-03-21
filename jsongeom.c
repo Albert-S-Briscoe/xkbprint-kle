@@ -53,7 +53,7 @@ typedef struct {
     JSONState			lastkey;
 } PSState;
 
-#define NLABELS     5
+#define NLABELS     64
 #define LABEL_LEN   30
 
 typedef struct {
@@ -75,8 +75,7 @@ typedef struct {
 // PSNonLatin1Symbol() might be mildly interesting
 
 static void
-labelSymbol(unsigned char *input) {
-	char *label = (char *) input;
+labelSymbol(char *label) {
 	if (strcmp(label, "Up") == 0) {
 		strcpy(label, "↑");
 	}
@@ -93,8 +92,7 @@ labelSymbol(unsigned char *input) {
 }
 
 static void
-simplifyLabel(unsigned char *input) { // suggestions are welcome
-	char *label = (char *) input;
+simplifyLabel(char *label) { // suggestions are welcome
 	if ((strcmp(label, "Shift_L") == 0) ||
 	    (strcmp(label, "Shift_R") == 0)) {
 		strcpy(label, "Shift");
@@ -291,7 +289,7 @@ static char *getcolor(int Color, PSState *state) {
 }
 
 static json_object *FindKeysymsByName(XkbDescPtr xkb, char *name, PSState *state, KeyTop *top) {
-    static unsigned char buf[30];
+    static char buf[30];
     int kc;
     KeySym sym, *syms, topSyms[NLABELS];
     int level, group;
@@ -356,8 +354,8 @@ static json_object *FindKeysymsByName(XkbDescPtr xkb, char *name, PSState *state
         if ((eG + g) >= nG)
             continue;
         for (l = 0; l < state->args->nLabelLayers; l++) {
+			char utf8[30];
 //            int font, sz;
-            char utf8[30];
 
             if (level + l >= XkbKeyGroupWidth(xkb, kc, (eG + g)))
                 continue;
@@ -371,16 +369,16 @@ static json_object *FindKeysymsByName(XkbDescPtr xkb, char *name, PSState *state
             xkb_keysym_to_utf8(sym, utf8, 30);
 
             if ((utf8[0] & '\xE0') && (utf8[0] != '\x7f')) { // exclude ascii control codes and empty strings
-                strcpy((char *) buf, utf8);
+                strcpy(buf, utf8);
            	}
            	else {
                 char *tmp;
 
                 tmp = XKeysymToString(sym); // full keysym name (eg "Aacute" or "ISO_Level3_Shift" or "Backspace")
                 if (tmp != NULL)
-                    strcpy((char *) buf, tmp);
+                    strcpy(buf, tmp);
                 else
-                    snprintf((char *) buf, sizeof(buf), "(%ld)", sym); // last resort: print keysym as a number
+                    snprintf(buf, sizeof(buf), "(%ld)", sym); // last resort: print keysym as a number
            	}
 			fprintf(stderr, "        G%dL%d text: \"%s\"\n", g, l, buf);
 //			if (g == 0 && l == 0) {
@@ -393,12 +391,10 @@ static json_object *FindKeysymsByName(XkbDescPtr xkb, char *name, PSState *state
 			if (state->args->altNames) {
 				simplifyLabel(buf);
 		    }
-			strcpy(keycaps[g][l], (char *) buf);
-			fprintf(stderr, "        more debug text: \"%s\"\n", keycaps[0][0]);
+			strcpy(keycaps[g][l], buf);
 			groupLayers[g] += 1;
         }
 
-		fprintf(stderr, "        debug text: \"%s\"\n", keycaps[g][0]);
         // not sure where to put this, here should be ok ish
         // remove duplicate labels
 		if (strcmp(keycaps[g][0], keycaps[g][1]) == 0) {
