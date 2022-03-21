@@ -42,7 +42,6 @@ typedef struct {
     XkbDescPtr          xkb;
     XkbGeometryPtr      geom;
     int                 totalKB;
-    int                 kbPerPage;
     int                 black;
     int                 white;
     int                 color;
@@ -680,7 +679,6 @@ GeometryToJSON(FILE *out, XkbFileInfo *pResult, XKBPrintArgs *args)
     state.font = -1;
     state.nPages = 0;
     state.totalKB = 1;
-    state.kbPerPage = 1;
     state.x1 = state.y1 = state.x2 = state.y2 = 0;
     state.args = args;
     state.lastkey.x = 0;
@@ -694,11 +692,7 @@ GeometryToJSON(FILE *out, XkbFileInfo *pResult, XKBPrintArgs *args)
             state.totalKB = args->nTotalGroups;
         if (state.totalKB < 1)
             state.totalKB = 1;
-        else if (state.totalKB > 1)
-            state.kbPerPage = 2;
     }
-    if (args->nKBPerPage != 0)
-        state.kbPerPage = args->nKBPerPage;
 
     json_object_array_add(keyboardjson, metadata(&state)); // add metadata to main array
 

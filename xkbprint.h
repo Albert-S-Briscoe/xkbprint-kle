@@ -37,23 +37,43 @@
 #define COMMON_SYMBOLS  1
 #define ALL_SYMBOLS     2
 
+#define FORMAT_BASIC	0
+#define FORMAT_MINIMAL	1
+#define FORMAT_ALTGR	2
+#define FORMAT_ISO		3
+#define FORMAT_EXTRA	4
+
+#define PROFILE_DEFAULT	0
+#define PROFILE_SHAPE	1
+#define PROFILE_COLOR	2
+#define PROFILE_SA		3
+#define PROFILE_DSA		4
+#define PROFILE_DCS		5
+#define PROFILE_OEM		6
+#define PROFILE_CHICKLET 7
+#define PROFILE_FLAT	8
+
+
 typedef struct _XKBPrintArgs {
-    int         copies;
     int         grid;
     int         label;
     int         baseLabelGroup;
     int         nLabelGroups;
     int			nLabelLayers;
     int         nTotalGroups;
-    int         nKBPerPage;
     int         labelLevel;
     int         wantSymbols;
+    int			labelFormat;
+    int			profile;
     Bool        wantKeycodes;
     Bool        wantDiffs;
     Bool        scaleToFit;
     Bool        wantColor;
     Bool        level1;
-    Bool        wantEPS;
+    Bool		UnicodeAlpha; // false to disable alpha for unicode
+    Bool		group2; // enable group on right of keycap
+    Bool		group2Color; // color 2nd group blue
+    Bool		altNames;
 } XKBPrintArgs;
 
 extern Bool

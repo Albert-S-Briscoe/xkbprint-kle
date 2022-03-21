@@ -63,7 +63,6 @@ static const char *     wantLocale = "C";
 static char *           rootDir;
 static char *           inputFile;
 static char *           outputFile;
-static char *           outputFont = NULL;
 static char *           inDpyName;
 static char *           outDpyName;
 static Display *        inDpy;
@@ -79,49 +78,40 @@ Usage(int argc, char *argv[])
 {
     fprintf(stderr, "Usage: %s [options] input-file [ output-file ]\n%s",
             argv[0],
+            "\"(?)\" Means that option is untested. It may or may not do something. It might cause a segmentation fault. I have no idea."
             "Legal options:\n"
-            "-?,-help      Print this message\n"
-            "-color        Use colors from geometry\n"
+            "-h,--help      Print this message\n"
+            "--color        Use colors from geometry (default)\n"
 #ifdef DEBUG
             "-d [flags]    Report debugging information\n"
 #endif
-            "-dflts        Compute defaults for missing components\n"
-            "-diffs        Only show explicit key definitions\n"
-            "-eps          Generate an EPS file\n"
-            "-fit          Fit keyboard image on page (default)\n"
-            "-full         Print keyboard image full sized\n"
-            "-grid <n>     Print a grid with <n> mm resolution\n"
-            "-if <name>    Specifies the name of an internal font to dump\n"
+            "--diffs        Only show explicit key definitions (?)\n"
+            "-grid <n>     Print a grid with <n> mm resolution (?)\n"
 #ifdef DEBUG
             "-I[<dir>]     Specifies a top level directory\n"
             "              for include directives.  You can\n"
-            "              specify multiple directories.\n"
+            "              specify multiple directories. (?)\n"
 #endif
-            "-kc           Also print keycodes, if possible\n"
+            "-k,--keycodes Also print keycodes, if possible\n"
             "-label <what> Specifies the label to be drawn on keys\n"
             "              Legal values for <what> are:\n"
-            "                  none,name,code,symbols\n"
-            "-lc <locale>  Use <locale> for fonts and symbols\n"
-            "-level1       Use level 1 PostScript (default)\n"
-            "-level2       Use level 2 PostScript\n"
-            "-lg <num>     Use keyboard group <num> to print labels\n"
-            "-ll <num>     Use shift level <num> to print labels\n"
-            "-mono         Ignore colors from geometry (default)\n"
-            "-n <num>      Print <num> copies (default 1)\n"
-            "-nkg <num>    Number of groups to print on each key\n"
-            "-nkl <num>    Number of layers to print on each key\n"
-            "-nokc         Don't print keycodes, even if possible\n"
-            "-npk <num>    Number of keyboards to print on each page\n"
-            "-ntg <num>    Total number of groups to print\n"
+            "                  none,name,code,symbols (?)\n"
+            "-lc <locale>  Use <locale> for fonts and symbols (?)\n"
+            "-lg <num>     Use keyboard group <num> to print labels (?)\n"
+            "-ll <num>     Use shift level <num> to print labels (?)\n"
+            "-mono         Ignore colors from geometry (?)\n"
+            "-nkg <num>    Number of groups to print on each key (?)\n"
+            "-nkl <num>    Number of layers to print on each key (?)\n"
+            "-ntg <num>    Total number of groups to print (?)\n"
             "-o <file>     Specifies output file name\n"
             "-R[<DIR>]     Specifies the root directory for relative\n"
             "              path names\n"
             "-pict <what>  Specifies use of pictographs instead of\n"
             "              keysym names where available, <what> can\n"
-            "              be \"all\", \"none\" or \"common\" (default)\n"
-            "-synch        Force synchronization\n"
+            "              be \"all\", \"none\" or \"common\" (default) (?)\n"
+            "-synch        Force synchronization (?)\n"
             "-version      Print program version\n"
-            "-w <lvl>      Set warning level (0=none, 10=all)\n"
+            "-w <lvl>      Set warning level (0=none, 10=all) (?)\n"
         );
 }
 
@@ -132,21 +122,17 @@ parseArgs(int argc, char *argv[])
 {
     register int i;
 
-    args.copies = 1;
     args.grid = 0;
-    args.level1 = True;
     args.scaleToFit = True;
-    args.wantColor = False;
+    args.wantColor = True;
     args.wantSymbols = COMMON_SYMBOLS;
-    args.wantKeycodes = True;
+    args.wantKeycodes = False;
     args.wantDiffs = False;
-    args.wantEPS = False;
     args.label = LABEL_AUTO;
     args.baseLabelGroup = 0;
     args.nLabelGroups = 1;
     args.nLabelLayers = 2;
     args.nTotalGroups = 0;
-    args.nKBPerPage = 0;
     args.labelLevel = 0;
     for (i = 1; i < argc; i++) {
         if ((argv[i][0] != '-') || (uStringEqual(argv[i], "-"))) {
@@ -162,12 +148,12 @@ parseArgs(int argc, char *argv[])
                         inputFile, outputFile, argv[i]);
             }
         }
-        else if ((strcmp(argv[i], "-?") == 0) ||
-                 (strcmp(argv[i], "-help") == 0)) {
+        else if ((strcmp(argv[i], "-h") == 0) ||
+                 (strcmp(argv[i], "--help") == 0)) {
             Usage(argc, argv);
             exit(0);
         }
-        else if (strcmp(argv[i], "-color") == 0) {
+        else if (strcmp(argv[i], "--color") == 0) {
             args.wantColor = True;
         }
 #ifdef DEBUG
@@ -181,20 +167,8 @@ parseArgs(int argc, char *argv[])
             uInformation("Setting debug flags to %d\n", debugFlags);
         }
 #endif
-        else if (strcmp(argv[i], "-dflts") == 0) {
-            uWarning("Compute defaults not implemented yet\n");
-        }
-        else if (strcmp(argv[i], "-diffs") == 0) {
+        else if (strcmp(argv[i], "--diffs") == 0) {
             args.wantDiffs = True;
-        }
-        else if (strcmp(argv[i], "-eps") == 0) {
-            args.wantEPS = True;
-        }
-        else if (strcmp(argv[i], "-fit") == 0) {
-            args.scaleToFit = True;
-        }
-        else if (strcmp(argv[i], "-full") == 0) {
-            args.scaleToFit = False;
         }
         else if (strcmp(argv[i], "-grid") == 0) {
             int tmp;
@@ -210,15 +184,7 @@ parseArgs(int argc, char *argv[])
             else
                 args.grid = tmp;
         }
-        else if (strcmp(argv[i], "-if") == 0) {
-            if (++i >= argc) {
-                uWarning("Internal Font name not specified\n");
-                uAction("Trailing \"-if\" option ignored\n");
-            }
-            else
-                outputFont = argv[i];
-        }
-        else if (strcmp(argv[i], "-kc") == 0) {
+        else if ((strcmp(argv[i], "-k") == 0) || (strcmp(argv[i], "--keycodes") == 0)) {
             args.wantKeycodes = True;
         }
         else if (strcmp(argv[i], "-label") == 0) {
@@ -256,7 +222,7 @@ parseArgs(int argc, char *argv[])
             }
             else if ((sscanf(argv[i], "%i", &tmp) != 1) || (tmp < 1) ||
                      (tmp > 4)) {
-                uWarning("Label group must be an integer in the range 1..4\n");
+                uWarning("Label group must be an integer in the range 1..2\n");
                 uAction("Illegal group %d ignored\n", tmp);
             }
             else
@@ -271,35 +237,14 @@ parseArgs(int argc, char *argv[])
             }
             else if ((sscanf(argv[i], "%i", &tmp) != 1) || (tmp < 1) ||
                      (tmp > 255)) {
-                uWarning("Label level must be in the range 1..255\n");
+                uWarning("Label level must be in the range 1..4\n");
                 uAction("Illegal level %d ignored\n", tmp);
             }
             else
                 args.labelLevel = tmp - 1;
         }
-        else if (strcmp(argv[i], "-level1") == 0)
-            args.level1 = True;
-        else if (strcmp(argv[i], "-level2") == 0)
-            args.level1 = False;
         else if (strcmp(argv[i], "-mono") == 0) {
             args.wantColor = False;
-        }
-        else if (strcmp(argv[i], "-n") == 0) {
-            int tmp;
-
-            if (++i >= argc) {
-                uWarning("Number of copies not specified\n");
-                uAction("Trailing \"-n\" option ignored\n");
-            }
-            else if ((sscanf(argv[i], "%i", &tmp) != 1) || (tmp < 1)) {
-                uWarning("Number of copies must be an integer > zero\n");
-                uAction("Illegal count %d ignored\n", tmp);
-            }
-            else
-                args.copies = tmp;
-        }
-        else if (strcmp(argv[i], "-nokc") == 0) {
-            args.wantKeycodes = False;
         }
         else if (strcmp(argv[i], "-nkg") == 0) {
             int tmp;
@@ -330,21 +275,6 @@ parseArgs(int argc, char *argv[])
             }
             else
                 args.nLabelLayers = tmp;
-        }
-        else if (strcmp(argv[i], "-npk") == 0) {
-            int tmp;
-
-            if (++i >= argc) {
-                uWarning("Number of keyboards per page not specified\n");
-                uAction("Trailing \"-npk\" option ignored\n");
-            }
-            else if ((sscanf(argv[i], "%i", &tmp) != 1) || (tmp < 1) ||
-                     (tmp > 2)) {
-                uWarning("Keyboards per page must be in the range 1..2\n");
-                uAction("Illegal number of keyboards %d ignored\n", tmp);
-            }
-            else
-                args.nKBPerPage = tmp;
         }
         else if (strcmp(argv[i], "-ntg") == 0) {
             int tmp;
@@ -435,38 +365,7 @@ parseArgs(int argc, char *argv[])
             uAction("Root directory (-R) option ignored\n");
         }
     }
-/*	if (outputFont != NULL) {
-        Bool ok;
-        FILE *file = NULL;
-
-        if (outputFile == NULL) {
-            asprintf(&outputFile, "%s.pfa", outputFont);
-        }
-        else if (uStringEqual(outputFile, "-"))
-            file = stdout;
-
-        if (file == NULL)
-            file = fopen(outputFile, "w");
-
-        if (!file) {
-            uError("Couldn't open \"%s\" to dump internal font \"%s\"\n",
-                   outputFile, outputFont);
-            uAction("Exiting\n");
-            exit(1);
-        }
-        ok = DumpInternalFont(file, outputFont);
-        if (file != stdout)
-            fclose(file);
-        if (!ok) {
-            uWarning("No internal font to dump\n");
-            if (file != stdout) {
-                uAction("Removing \"%s\"\n", outputFile);
-                unlink(outputFile);
-            }
-        }
-        exit((ok != 0));
-    }
-*/	if (inputFile == NULL) {
+	if (inputFile == NULL) {
         uError("No input file specified\n");
         Usage(argc, argv);
         return False;
@@ -512,10 +411,7 @@ parseArgs(int argc, char *argv[])
             uAction("Exiting\n");
             exit(1);
         }
-        if (args.wantEPS)
-            snprintf(outputFile, len, "stdin.eps");
-        else
-            snprintf(outputFile, len, "stdin.ps");
+        snprintf(outputFile, len, "stdin.ps");
     }
     else if ((outputFile == NULL) && (inputFile != NULL)) {
         size_t len;
@@ -537,17 +433,11 @@ parseArgs(int argc, char *argv[])
         }
         ext = strrchr(base, '.');
         if (ext == NULL) {
-            if (args.wantEPS)
-                snprintf(outputFile, len, "%s.eps", base);
-            else
-                snprintf(outputFile, len, "%s.ps", base);
+            snprintf(outputFile, len, "%s.json", base);
         }
         else {
             strcpy(outputFile, base);
-            if (args.wantEPS)
-                strcpy(&outputFile[ext - base + 1], "eps");
-            else
-                strcpy(&outputFile[ext - base + 1], "ps");
+            strcpy(&outputFile[ext - base + 1], "json");
         }
     }
     else if (outputFile == NULL) {
@@ -575,16 +465,13 @@ parseArgs(int argc, char *argv[])
                 *ch = '_';
         }
         *ch++ = '.';
-        if (args.wantEPS)
-            strcpy(ch, "eps");
-        else
-            strcpy(ch, "ps");
+        strcpy(ch, "json");
     }
     else if (strchr(outputFile, ':') != NULL) {
         outDpyName = outputFile;
         outputFile = NULL;
         outputFormat = WANT_X_SERVER;
-        uInternalError("Output to an X server not implemented yet\n");
+        uInternalError("Output to an X server not implemented yet\n"); // why would it ever be? PS to x? I'm leaving this here just because I think it's funny.
         return False;
     }
     return True;
