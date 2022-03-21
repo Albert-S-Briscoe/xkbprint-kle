@@ -139,16 +139,26 @@ simplifyLabel(char *label) { // suggestions are welcome
 		(strcmp(label, "Control_R") == 0)) {
 		strcpy(label, "Ctrl");
 	}
+	if (strcmp(label, " ") == 0) {
+		strcpy(label, "NNBSP");
+	}
+	if (strcmp(label, "‌") == 0) {
+		strcpy(label, "ZWNJ");
+	}
+	if (strcmp(label, " ") == 0) {
+		strcpy(label, "NBSP");
+	}
 	if (strncmp(label, "ISO_", 4) == 0) { // remove ISO_ prefix
 		strcpy(label, label + 4);
 	}
-	for (int i = 1; label[i]; i++) { // underscores look kinda bad. Start at 1 so that the underscore label doesn't match.
+	for (int i = 1; label[i]; i++) { // underscores look better as spaces. Starts at 1 so that the underscore label doesn't match.
 		if (label[i] == '_')
 			label[i] = ' ';
 	}
 	return;
 }
 
+// I think this is unused at the moment
 static KeySym
 CheckSymbolAlias(KeySym sym)
 {
@@ -297,6 +307,7 @@ static char *getcolor(int Color, PSState *state) {
     return output;
 }
 
+// complicated and probably hard to read label arrangement code
 static void
 arrangeLabels(char *output, char keycaps[LABEL_GROUPS][LABEL_LAYERS][LABEL_LEN], int kc, PSState *state) {
     char emptylabel[] = ""; // there must be a better way to do this.
@@ -322,11 +333,6 @@ keycap text position order. The text is seperated by newlines.
 			labels[0] = keycaps[0][0];
 	}
 	// AltGr
-	else if (state->args->labelFormat == FORMAT_ALTGR && keycaps[0][1][0] == '\0') {
-		labels[0] = keycaps[0][0];
-		labels[2] = keycaps[0][3];
-		labels[3] = keycaps[0][2];
-	}
 	else if (state->args->labelFormat == FORMAT_ALTGR) {
 		labels[0] = keycaps[0][1];
 		labels[1] = keycaps[0][0];
@@ -359,16 +365,35 @@ keycap text position order. The text is seperated by newlines.
 	else if (state->args->labelFormat == FORMAT_NONE) {
 	}
 	// format_basic (default)
-	else if (keycaps[0][1][0] != '\0') {
+	else {
 		labels[0] = keycaps[0][1];
 		labels[1] = keycaps[0][0];
 	}
-	else { // show single-level labels at top-left
-		labels[0] = keycaps[0][0];
+
+	// move labels (on keys with only one label on that side (like backspace or shift)) to the top
+	// 0, 6, 1, 4
+	if (labels[0][0] == '\0' && labels[4][0] == '\0') {
+		if (labels[1][0] == '\0' && labels[6][0] != '\0') {
+			labels[0] = labels[6];
+			labels[6] = emptylabel;
+		}
+		if (labels[1][0] != '\0' && labels[6][0] == '\0') {
+			labels[0] = labels[1];
+			labels[1] = emptylabel;
+		}
+	}
+	// 2, 7, 3, 5
+	if (labels[2][0] == '\0' && labels[5][0] == '\0') {
+		if (labels[3][0] == '\0' && labels[7][0] != '\0') {
+			labels[2] = labels[7];
+			labels[7] = emptylabel;
+		}
+		if (labels[3][0] != '\0' && labels[7][0] == '\0') {
+			labels[2] = labels[3];
+			labels[3] = emptylabel;
+		}
 	}
 
-
-//	sprintf(output, "%s\n%s\n%s\n%s\n%s\n%s\n%s\n%s\n%s\n%s\n%s\n%s", labels[0],  labels[1], labels[2], labels[3], labels[4], labels[5], labels[6], labels[7], labels[8], labels[9], labels[10], labels[11]);
 	for (int i = 0; i < 11; i++) {
 		strcat(output, labels[i]);
 		strcat(output, "\n");
@@ -376,7 +401,6 @@ keycap text position order. The text is seperated by newlines.
 
     if (state->args->wantKeycodes) {
 		sprintf(keycode, "%d", kc);
-//		labels[11] = keycode;
 		strcat(output, keycode);
     }
 
