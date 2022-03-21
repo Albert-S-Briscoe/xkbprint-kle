@@ -85,7 +85,14 @@ Usage(int argc, char *argv[])
 #ifdef DEBUG
             "-d [flags]    Report debugging information\n"
 #endif
-            "--diffs        Only show explicit key definitions (?)\n"
+            "--diffs       Only show explicit key definitions (?)\n"
+            "-f <what>     Change what number of characters are printed on each key. <what> can be:\n"
+            "                  \"basic\": base and shift (default),\n"
+            "                  \"minimal\": base level only,\n"
+            "                  \"none\": no labels (doesn't affect keycodes),\n"
+            "                  \"altgr\": level 3 and 4 on right,\n"
+            "                  \"iso\": 2 groups, 3 levels, 2nd group on the right,\n"
+            "                  \"extended\": iso with 4th level on keycap front.\n"
             "-grid <n>     Print a grid with <n> mm resolution (?)\n"
 #ifdef DEBUG
             "-I[<dir>]     Specifies a top level directory\n"
@@ -136,6 +143,7 @@ parseArgs(int argc, char *argv[])
     args.altNames = True;
     args.UnicodeLabels = False;
     args.label = LABEL_AUTO;
+    args.labelFormat = FORMAT_BASIC;
     args.baseLabelGroup = 0;
     args.nLabelGroups = 1;
     args.nLabelLayers = 2;
@@ -176,6 +184,28 @@ parseArgs(int argc, char *argv[])
 #endif
         else if (strcmp(argv[i], "--diffs") == 0) {
             args.wantDiffs = True;
+        }
+        else if (strcmp(argv[i], "-f") == 0) {
+            if (++i >= argc) {
+                uWarning("Label format not specified\n");
+                uAction("Trailing \"-f\" option ignored\n");
+            }
+            else if (uStrCaseEqual(argv[i], "basic"))
+                args.labelFormat = FORMAT_BASIC;
+            else if (uStrCaseEqual(argv[i], "minimal"))
+                args.labelFormat = FORMAT_MINIMAL;
+            else if (uStrCaseEqual(argv[i], "altgr"))
+                args.labelFormat = FORMAT_ALTGR;
+            else if (uStrCaseEqual(argv[i], "iso"))
+                args.labelFormat = FORMAT_ISO;
+            else if (uStrCaseEqual(argv[i], "extended"))
+                args.labelFormat = FORMAT_EXTRA;
+            else if (uStrCaseEqual(argv[i], "none"))
+                args.labelFormat = FORMAT_NONE;
+            else {
+                uWarning("Unknown label format \"%s\" specified\n", argv[i]);
+                uAction("Ignored\n");
+            }
         }
         else if (strcmp(argv[i], "-grid") == 0) {
             int tmp;

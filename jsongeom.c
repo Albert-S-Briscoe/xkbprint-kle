@@ -53,8 +53,12 @@ typedef struct {
     JSONState			lastkey;
 } PSState;
 
-#define NLABELS     64
+#define NLABELS     8
 #define LABEL_LEN   30
+
+// maximum that can reasonably fit on a keycap
+#define LABEL_LAYERS	4
+#define LABEL_GROUPS	2
 
 typedef struct {
     unsigned    present;
@@ -114,7 +118,8 @@ simplifyLabel(char *label) { // suggestions are welcome
 	}
 	if ((strcmp(label, "Alt_L") == 0) ||
 		(strcmp(label, "Alt_R") == 0) ||
-		(strcmp(label, "Meta_L") == 0)) {
+		(strcmp(label, "Meta_L") == 0) ||
+		(strcmp(label, "Meta_R") == 0)) {
 		strcpy(label, "Alt");
 	}
 	if ((strcmp(label, "Super_L") == 0) ||
@@ -136,6 +141,10 @@ simplifyLabel(char *label) { // suggestions are welcome
 	}
 	if (strncmp(label, "ISO_", 4) == 0) { // remove ISO_ prefix
 		strcpy(label, label + 4);
+	}
+	for (int i = 1; label[i]; i++) { // underscores look kinda bad. Start at 1 so that the underscore label doesn't match.
+		if (label[i] == '_')
+			label[i] = ' ';
 	}
 	return;
 }
@@ -288,30 +297,110 @@ static char *getcolor(int Color, PSState *state) {
     return output;
 }
 
+static void
+arrangeLabels(char *output, char keycaps[LABEL_GROUPS][LABEL_LAYERS][LABEL_LEN], int kc, PSState *state) {
+    char emptylabel[] = ""; // there must be a better way to do this.
+    char *labels[12] = { emptylabel, emptylabel, emptylabel, emptylabel, emptylabel, emptylabel, emptylabel, emptylabel, emptylabel, emptylabel, emptylabel, emptylabel };
+    char keycode[4] = ""; // keycode string
+
+
+/*
+keycap text position order. The text is seperated by newlines.
+0	8	2
+6	9	7
+1	10	3
+---------
+4	11	5
+*/
+	// I'm using concatenated strings so that it's easier to compare the order.
+	//                         0   1   2   3   4   5   6   7   8-10  11
+	// minimal
+	if (state->args->labelFormat == FORMAT_MINIMAL) {
+		if (keycaps[0][0][0] == '\0') // show alphabetical characters correctly
+			labels[0] = keycaps[0][1];
+		else
+			labels[0] = keycaps[0][0];
+	}
+	// AltGr
+	else if (state->args->labelFormat == FORMAT_ALTGR && keycaps[0][1][0] == '\0') {
+		labels[0] = keycaps[0][0];
+		labels[2] = keycaps[0][3];
+		labels[3] = keycaps[0][2];
+	}
+	else if (state->args->labelFormat == FORMAT_ALTGR) {
+		labels[0] = keycaps[0][1];
+		labels[1] = keycaps[0][0];
+		labels[2] = keycaps[0][3];
+		labels[3] = keycaps[0][2];
+	}
+	// ISO
+    else if (state->args->labelFormat == FORMAT_ISO) {
+		labels[0] = keycaps[0][1];
+		labels[1] = keycaps[0][2];
+		labels[2] = keycaps[1][1];
+		labels[3] = keycaps[1][2];
+		// 4
+		// 5
+		labels[6] = keycaps[0][0];
+		labels[7] = keycaps[1][0];
+    }
+    // extra
+    else if (state->args->labelFormat == FORMAT_EXTRA) {
+		labels[0] = keycaps[0][1];
+		labels[1] = keycaps[0][2];
+		labels[2] = keycaps[1][1];
+		labels[3] = keycaps[1][2];
+		labels[4] = keycaps[0][3];
+		labels[5] = keycaps[1][3];
+		labels[6] = keycaps[0][0];
+		labels[7] = keycaps[1][0];
+    }
+    // none
+	else if (state->args->labelFormat == FORMAT_NONE) {
+	}
+	// format_basic (default)
+	else if (keycaps[0][1][0] != '\0') {
+		labels[0] = keycaps[0][1];
+		labels[1] = keycaps[0][0];
+	}
+	else { // show single-level labels at top-left
+		labels[0] = keycaps[0][0];
+	}
+
+
+//	sprintf(output, "%s\n%s\n%s\n%s\n%s\n%s\n%s\n%s\n%s\n%s\n%s\n%s", labels[0],  labels[1], labels[2], labels[3], labels[4], labels[5], labels[6], labels[7], labels[8], labels[9], labels[10], labels[11]);
+	for (int i = 0; i < 11; i++) {
+		strcat(output, labels[i]);
+		strcat(output, "\n");
+	}
+
+    if (state->args->wantKeycodes) {
+		sprintf(keycode, "%d", kc);
+//		labels[11] = keycode;
+		strcat(output, keycode);
+    }
+
+	return;
+}
+
+
 static json_object *FindKeysymsByName(XkbDescPtr xkb, char *name, PSState *state, KeyTop *top) {
-    static char buf[30];
+    static char buf[LABEL_LEN];
     int kc;
     KeySym sym, *syms, topSyms[NLABELS];
     int level, group;
     int eG, nG, gI, l, g;
     json_object *output;
-    char keycaps[4][64][30]; // array of strings to store keycap text in. 4 groups, 64 levels is the max in xkb
-    int groupLayers[4]; // remember how many layers each group has
-    char formattedstr[256]; // used to arrange text on the keycaps
-    char keycode[4]; // keycode string
-    Bool duplicate = False; // probably a better way to do this
+    char keycaps[LABEL_GROUPS][LABEL_LAYERS][LABEL_LEN]; // array of strings to store keycap text in. 4 groups, 64 levels is the max in xkb
+    char formattedstr[256] = ""; // used to arrange text on the keycaps
     int groups = 0; // keep track of number of groups
 
     bzero(top, sizeof(KeyTop));
     kc = XkbFindKeycodeByName(xkb, name, True);
-    keycode[0] = '\0';
-    for (int i = 0; i < 4; i++) {
-    	for (int a = 0; a < 64; a++) {
-    		for (int b = 0; b < 30; b++) {
-	    		keycaps[i][a][b] = '\0';
-	    	}
+    for (int i = 0; i < LABEL_GROUPS; i++) {
+    	for (int a = 0; a < LABEL_LAYERS; a++) {
+			keycaps[i][a][0] = '\0';
     	}
-    	groupLayers[i] = 0;
     }
 
     if (state->args != NULL) {
@@ -350,11 +439,11 @@ static json_object *FindKeysymsByName(XkbDescPtr xkb, char *name, PSState *state
 
 //	fprintf(stderr, "Current keycode: %d\n", kc);
 
-    for (g = 0; g < state->args->nLabelGroups; g++) {
+    for (g = 0; g < state->args->nLabelGroups && g < LABEL_GROUPS; g++) {
         if ((eG + g) >= nG)
             continue;
-        for (l = 0; l < state->args->nLabelLayers; l++) {
-			char utf8[30];
+        for (l = 0; l < state->args->nLabelLayers && l < LABEL_LAYERS; l++) {
+			char utf8[LABEL_LEN];
 //            int font, sz;
 
             if (level + l >= XkbKeyGroupWidth(xkb, kc, (eG + g)))
@@ -363,10 +452,11 @@ static json_object *FindKeysymsByName(XkbDescPtr xkb, char *name, PSState *state
 
             if (state->args->wantSymbols != NO_SYMBOLS)
                 sym = CheckSymbolAlias(sym);
-            topSyms[(g * 2) + l] = sym;
+            if ((g * 2) + l < NLABELS)
+	            topSyms[(g * 2) + l] = sym;
 
             utf8[0] = '\0';
-            xkb_keysym_to_utf8(sym, utf8, 30);
+            xkb_keysym_to_utf8(sym, utf8, LABEL_LEN);
 
             if ((utf8[0] & '\xE0') && (utf8[0] != '\x7f')) { // exclude ascii control codes and empty strings
                 strcpy(buf, utf8);
@@ -392,65 +482,36 @@ static json_object *FindKeysymsByName(XkbDescPtr xkb, char *name, PSState *state
 				simplifyLabel(buf);
 		    }
 			strcpy(keycaps[g][l], buf);
-			groupLayers[g] += 1;
         }
 
         // not sure where to put this, here should be ok ish
         // remove duplicate labels
 		if (strcmp(keycaps[g][0], keycaps[g][1]) == 0) {
         	keycaps[g][1][0] = '\0';
-        	duplicate = True;
 		}
 		if (strcmp(keycaps[g][0], keycaps[g][2]) == 0) {
 			keycaps[g][2][0] = '\0';
         }
+        if (strcmp(keycaps[g][0], keycaps[g][3]) == 0) {
+        	keycaps[g][3][0] = '\0';
+        }
 
-//		if (((g == 0) && (top->present & G1LX_MASK) == G1LX_MASK) ||
-//	        ((g == 1) && (top->present & G2LX_MASK) == G2LX_MASK)) {		// if all positions per layer have characters
-		if ((g == 0 || g == 1) && (groupLayers[g] > 1) && (!duplicate) && (state->args->UnicodeAlpha || !(keycaps[g][0][0] & '\x80'))) {
+		if ((g == 0 || g == 1) && (keycaps[g][0][0] != '\0') && (keycaps[g][1][0] != '\0') && (state->args->UnicodeAlpha || !(keycaps[g][0][0] & '\x80'))) {
             KeySym lower, upper;
 
             XConvertCase(topSyms[(g * 2)], &lower, &upper);
             if ((topSyms[(g * 2)] == lower) && (topSyms[(g * 2) + 1] == upper)) {
 				fprintf(stderr, "        alpha\n");
             	keycaps[g][0][0] = '\0';
-//	            top->alpha[g] = True;
+	            top->alpha[g] = True;
             }
 	    }
         groups += 1;
 	}
-/*
-keycap text position order
-0	8	2
-6	9	7
-1	10	3
----------
-4	11	5
-*/
-    if (state->args->wantKeycodes) {
-		sprintf(keycode, "%d", kc);
-    }
 
-	fprintf(stderr, "        groups: %d\n", groups);
-	if (groups > 1) {
-		// display 2 groups side by side, ISO style. Enable by option in the future.
-//		if (groupLayers[0] > 2 || groupLayers[1] > 2) {
-			// display 3 layers on keycap, ISO style
-			sprintf(formattedstr, "%s\n%s\n%s\n%s\n\n\n%s\n%s\n\n\n\n%s",
-					keycaps[0][1], keycaps[0][2], keycaps[1][1], keycaps[1][2], keycaps[0][0], keycaps[1][0], keycode);
-//		}
-//		else {
-//			sprintf(formattedstr, "%s\n%s\n\n\n\n\n%s
-//		}
-	}
-	else {
-//		if (groupLayers[0] > 2) {
-			sprintf(formattedstr, "%s\n%s\n\n\n\n\n%s\n\n\n\n\n%s", keycaps[0][1], keycaps[0][2], keycaps[0][0], keycode);
-//		}
-//		else if (groupLayers[0] == 1)
-	}
+	arrangeLabels(formattedstr, keycaps, kc, state);
+
 	output = json_object_new_string(formattedstr);
-//	output = json_object_new_string("no");
 	return output;
 }
 
@@ -529,7 +590,7 @@ static json_object *PSSection(FILE *out, PSState *state, XkbSectionPtr section) 
 	    fprintf(stderr, "    keys: %d\n", row->num_keys);
 
         for (k = 0, key = row->keys; k < row->num_keys; k++, key++) {
-            char *name, *name2, buf[30], buf2[30];
+            char *name, *name2, buf[LABEL_LEN], buf2[LABEL_LEN];
 //            int x, y;
             KeyTop top;
             char *keycolor;
@@ -602,8 +663,8 @@ static json_object *PSSection(FILE *out, PSState *state, XkbSectionPtr section) 
 						}
 						json_object_object_add(properties, "a", json_object_new_int(0));
 						json_object_object_add(properties, "y", json_object_new_double((double) yoffset));
-						json_object_object_add(properties, "x", json_object_new_double(((double) section->left) / 190.0));
-					    fprintf(stderr, "      left: %d\n", section->left);
+						json_object_object_add(properties, "x", json_object_new_double(((double) section->left + (double) key->gap + (double) row->left) / 190.0));
+					    fprintf(stderr, "      left: %d, gap: %d\n", section->left, key->gap);
 						flag = 1;
 					}
 					if (key->gap && (k != 0)) {

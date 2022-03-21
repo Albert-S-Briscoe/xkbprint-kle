@@ -42,6 +42,7 @@
 #define FORMAT_ALTGR	2
 #define FORMAT_ISO		3
 #define FORMAT_EXTRA	4
+#define FORMAT_NONE		5
 
 #define PROFILE_DEFAULT	0
 #define PROFILE_SHAPE	1
