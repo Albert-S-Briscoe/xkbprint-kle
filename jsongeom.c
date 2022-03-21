@@ -234,17 +234,20 @@ static json_object *FindKeysymsByName(XkbDescPtr xkb, char *name, PSState *state
     char keycaps[4][64][30]; // array of strings to store keycap text in. 4 groups, 64 levels is the max in xkb
     int groupLayers[4]; // remember how many layers each group has
     char formattedstr[256]; // used to arrange text on the keycaps
+    char keycode[4]; // keycode string
     Bool duplicate = False; // probably a better way to do this
     int groups = 0; // keep track of number of groups
 
     bzero(top, sizeof(KeyTop));
     kc = XkbFindKeycodeByName(xkb, name, True);
+    keycode[0] = '\0';
     for (int i = 0; i < 4; i++) {
     	for (int a = 0; a < 64; a++) {
     		keycaps[i][a][0] = '\0';
     	}
     	groupLayers[i] = 0;
     }
+
     if (state->args != NULL) {
         level = state->args->labelLevel;
         group = state->args->baseLabelGroup;
@@ -286,7 +289,7 @@ static json_object *FindKeysymsByName(XkbDescPtr xkb, char *name, PSState *state
             continue;
         for (l = 0; l < state->args->nLabelLayers; l++) {
 //            int font, sz;
-            unsigned char utf8[30];
+            char utf8[30];
 
             if (level + l >= XkbKeyGroupWidth(xkb, kc, (eG + g)))
                 continue;
@@ -316,7 +319,7 @@ static json_object *FindKeysymsByName(XkbDescPtr xkb, char *name, PSState *state
 //				output = json_object_new_string(buf);
 //				return output;
 //			}
-			strcpy(keycaps[g][l], buf);
+			strcpy(keycaps[g][l], (char *) buf);
 			groupLayers[g] += 1;
         }
 
@@ -337,7 +340,7 @@ static json_object *FindKeysymsByName(XkbDescPtr xkb, char *name, PSState *state
 
             XConvertCase(topSyms[(g * 2)], &lower, &upper);
             if ((topSyms[(g * 2)] == lower) && (topSyms[(g * 2) + 1] == upper)) {
-				fprintf(stderr, "        alpha\n", groups);
+				fprintf(stderr, "        alpha\n");
             	keycaps[g][0][0] = '\0';
 //	            top->alpha[g] = True;
             }
@@ -352,13 +355,17 @@ keycap text position order
 ---------
 4	11	5
 */
+    if (state->args->wantKeycodes) {
+		sprintf(keycode, "%d", kc);
+    }
+
 	fprintf(stderr, "        groups: %d\n", groups);
 	if (groups > 1) {
 		// display 2 groups side by side, ISO style. Enable by option in the future.
 //		if (groupLayers[0] > 2 || groupLayers[1] > 2) {
 			// display 3 layers on keycap, ISO style
-			sprintf(formattedstr, "%s\n%s\n%s\n%s\n\n\n%s\n%s",
-					keycaps[0][1], keycaps[0][2], keycaps[1][1], keycaps[1][2], keycaps[0][0], keycaps[1][0]);
+			sprintf(formattedstr, "%s\n%s\n%s\n%s\n\n\n%s\n%s\n\n\n\n%s",
+					keycaps[0][1], keycaps[0][2], keycaps[1][1], keycaps[1][2], keycaps[0][0], keycaps[1][0], keycode);
 //		}
 //		else {
 //			sprintf(formattedstr, "%s\n%s\n\n\n\n\n%s
@@ -366,7 +373,7 @@ keycap text position order
 	}
 	else {
 //		if (groupLayers[0] > 2) {
-			sprintf(formattedstr, "%s\n%s\n\n\n\n\n%s", keycaps[0][1], keycaps[0][2], keycaps[0][0]);
+			sprintf(formattedstr, "%s\n%s\n\n\n\n\n%s\n\n\n\n\n%s", keycaps[0][1], keycaps[0][2], keycaps[0][0], keycode);
 //		}
 //		else if (groupLayers[0] == 1)
 	}
@@ -397,11 +404,11 @@ static json_object *PSSection(FILE *out, PSState *state, XkbSectionPtr section) 
 	json_object *sectionjson = json_object_new_array();
     int r, offset;
     XkbRowPtr row;
-    Display *dpy;
+//	Display *dpy;
     XkbDescPtr xkb;
 
     xkb = state->xkb;
-    dpy = xkb->dpy;
+//	dpy = xkb->dpy;
 //    fprintf(out, "%% Begin Section '%s'\n", (section->name != None ?
 //            XkbAtomGetString(dpy, section-> name) : "NoName"));
 //	PSGSave(out, state);
@@ -424,11 +431,12 @@ static json_object *PSSection(FILE *out, PSState *state, XkbSectionPtr section) 
     fprintf(stderr, "Rows: %d\n", section->num_rows);
     for (r = 0, row = section->rows; r < section->num_rows; r++, row++) {
 		json_object *rowjson = json_object_new_array();
-	    fprintf(stderr, "  Row: %d\n", r);
-        int k, kc = 0;
+	    int k;
         XkbKeyPtr key;
         XkbShapePtr shape;
         XkbBoundsRec bounds;
+
+	    fprintf(stderr, "  Row: %d\n", r);
 
         if (row->vertical) {
 		    fprintf(stderr, "    vertical row\n");
@@ -509,6 +517,7 @@ static json_object *PSSection(FILE *out, PSState *state, XkbSectionPtr section) 
 						yoffset = (double) (section->top + row->top) / 190.0;
 						yoffset -= state->lastkey.y;
 						yoffset -= 1.0;
+						json_object_object_add(properties, "a", json_object_new_int(0));
 						json_object_object_add(properties, "y", json_object_new_double((double) yoffset));
 						json_object_object_add(properties, "x", json_object_new_double(((double) section->left) / 190.0));
 					    fprintf(stderr, "      left: %d\n", section->left);
@@ -600,8 +609,8 @@ static json_object *PSSection(FILE *out, PSState *state, XkbSectionPtr section) 
             }
             name = key->name.name;
 //            fprintf(out, "%% %s\n", XkbKeyNameText(name, XkbMessage));
-            if (state->args->wantKeycodes)
-                kc = XkbFindKeycodeByName(xkb, key->name.name, True);
+//	        if (state->args->wantKeycodes)
+//	            kc = XkbFindKeycodeByName(xkb, key->name.name, True);
 //	        PSLabelKey(out, state, &top, x, y, &bounds, kc, shape->bounds.y2);
         }
 		json_object_array_add(sectionjson, rowjson);
