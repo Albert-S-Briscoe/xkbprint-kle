@@ -70,8 +70,8 @@ typedef struct _XKBPrintArgs {
     Bool        scaleToFit;
     Bool        wantColor;
     Bool        level1;
-    Bool		UnicodeAlpha; // false to disable alpha for unicode
-    Bool		group2; // enable group on right of keycap
+    Bool		UnicodeAlpha; // false to disable alpha for Unicode
+    Bool		UnicodeLabels; // translate certain keys to Unicode
     Bool		group2Color; // color 2nd group blue
     Bool		altNames;
 } XKBPrintArgs;

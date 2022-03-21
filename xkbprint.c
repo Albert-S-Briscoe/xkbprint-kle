@@ -80,8 +80,8 @@ Usage(int argc, char *argv[])
             argv[0],
             "\"(?)\" Means that option is untested. It may or may not do something. It might cause a segmentation fault. I have no idea."
             "Legal options:\n"
-            "-h,--help      Print this message\n"
-            "--color        Use colors from geometry (default)\n"
+            "-h,--help     Print this message\n"
+            "-c            Color second group (if enabled)"
 #ifdef DEBUG
             "-d [flags]    Report debugging information\n"
 #endif
@@ -93,6 +93,7 @@ Usage(int argc, char *argv[])
             "              specify multiple directories. (?)\n"
 #endif
             "-k,--keycodes Also print keycodes, if possible\n"
+            "--keysymnames Print full keysym names for keys like shift (Shift_L instead of Shift)"
             "-label <what> Specifies the label to be drawn on keys\n"
             "              Legal values for <what> are:\n"
             "                  none,name,code,symbols (?)\n"
@@ -100,7 +101,7 @@ Usage(int argc, char *argv[])
             "-lg <num>     Use keyboard group <num> to print labels (?)\n"
             "-ll <num>     Use shift level <num> to print labels (?)\n"
             "-mono         Ignore colors from geometry (?)\n"
-            "-nkg <num>    Number of groups to print on each key (?)\n"
+            "-g <num>      Number of groups to print on each key (default: 1)\n"
             "-nkl <num>    Number of layers to print on each key (?)\n"
             "-ntg <num>    Total number of groups to print (?)\n"
             "-o <file>     Specifies output file name\n"
@@ -110,6 +111,8 @@ Usage(int argc, char *argv[])
             "              keysym names where available, <what> can\n"
             "              be \"all\", \"none\" or \"common\" (default) (?)\n"
             "-synch        Force synchronization (?)\n"
+            "-u            Replace certain labels (only arrows currently) with Unicode characters"
+            "--no-unicode-alpha Disable treating Unicode characters as alphabetical"
             "-version      Print program version\n"
             "-w <lvl>      Set warning level (0=none, 10=all) (?)\n"
         );
@@ -128,6 +131,10 @@ parseArgs(int argc, char *argv[])
     args.wantSymbols = COMMON_SYMBOLS;
     args.wantKeycodes = False;
     args.wantDiffs = False;
+    args.UnicodeAlpha = True;
+    args.group2Color = False;
+    args.altNames = True;
+    args.UnicodeLabels = False;
     args.label = LABEL_AUTO;
     args.baseLabelGroup = 0;
     args.nLabelGroups = 1;
@@ -153,8 +160,8 @@ parseArgs(int argc, char *argv[])
             Usage(argc, argv);
             exit(0);
         }
-        else if (strcmp(argv[i], "--color") == 0) {
-            args.wantColor = True;
+        else if (strcmp(argv[i], "-c") == 0) {
+            args.group2Color = True;
         }
 #ifdef DEBUG
         else if (strcmp(argv[i], "-d") == 0) {
@@ -186,6 +193,9 @@ parseArgs(int argc, char *argv[])
         }
         else if ((strcmp(argv[i], "-k") == 0) || (strcmp(argv[i], "--keycodes") == 0)) {
             args.wantKeycodes = True;
+        }
+        else if (strcmp(argv[i], "--keysymnames") == 0) {
+            args.altNames = False;
         }
         else if (strcmp(argv[i], "-label") == 0) {
             if (++i >= argc) {
@@ -246,12 +256,12 @@ parseArgs(int argc, char *argv[])
         else if (strcmp(argv[i], "-mono") == 0) {
             args.wantColor = False;
         }
-        else if (strcmp(argv[i], "-nkg") == 0) {
+        else if (strcmp(argv[i], "-g") == 0) {
             int tmp;
 
             if (++i >= argc) {
                 uWarning("Number of groups per key not specified\n");
-                uAction("Trailing \"-nkg\" option ignored\n");
+                uAction("Trailing \"-g\" option ignored\n");
             }
             else if ((sscanf(argv[i], "%i", &tmp) != 1) || (tmp < 1) ||
                      (tmp > 2)) {
@@ -334,6 +344,12 @@ parseArgs(int argc, char *argv[])
         else if ((strcmp(argv[i], "-synch") == 0) ||
                  (strcmp(argv[i], "-s") == 0)) {
             synch = True;
+        }
+        else if (strcmp(argv[i], "-u") == 0) {
+            args.UnicodeLabels = True;
+        }
+        else if (strcmp(argv[i], "--no-unicode-alpha") == 0) {
+            args.UnicodeAlpha = False;
         }
         else if (strcmp(argv[i], "-version") == 0) {
             puts(PACKAGE_STRING);

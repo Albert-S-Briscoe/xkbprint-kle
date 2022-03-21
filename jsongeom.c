@@ -41,7 +41,6 @@ typedef struct {
     Display *           dpy;
     XkbDescPtr          xkb;
     XkbGeometryPtr      geom;
-    int                 totalKB;
     int                 black;
     int                 white;
     int                 color;
@@ -74,6 +73,74 @@ typedef struct {
 // ignore PSKeycapsSymbol()
 
 // PSNonLatin1Symbol() might be mildly interesting
+
+static void
+labelSymbol(unsigned char *input) {
+	char *label = (char *) input;
+	if (strcmp(label, "Up") == 0) {
+		strcpy(label, "↑");
+	}
+	if (strcmp(label, "Left") == 0) {
+		strcpy(label, "←");
+	}
+	if (strcmp(label, "Down") == 0) {
+		strcpy(label, "↓");
+	}
+	if (strcmp(label, "Right") == 0) {
+		strcpy(label, "→");
+	}
+	return;
+}
+
+static void
+simplifyLabel(unsigned char *input) { // suggestions are welcome
+	char *label = (char *) input;
+	if ((strcmp(label, "Shift_L") == 0) ||
+	    (strcmp(label, "Shift_R") == 0)) {
+		strcpy(label, "Shift");
+	}
+	if (strcmp(label, "ISO_Left_Tab") == 0) {
+		strcpy(label, "Tab");
+	}
+	if (strcmp(label, "BackSpace") == 0) {
+		strcpy(label, "Backspace");
+	}
+	if (strcmp(label, "Multi_key") == 0) {
+		strcpy(label, "Compose");
+	}
+	if (strcmp(label, "ISO_Level3_Shift") == 0) {
+		strcpy(label, "Level3"); // AltGr?
+	}
+	if (strcmp(label, "ISO_Level5_Shift") == 0) {
+		strcpy(label, "Level5");
+	}
+	if ((strcmp(label, "Alt_L") == 0) ||
+		(strcmp(label, "Alt_R") == 0) ||
+		(strcmp(label, "Meta_L") == 0)) {
+		strcpy(label, "Alt");
+	}
+	if ((strcmp(label, "Super_L") == 0) ||
+	    (strcmp(label, "Super_R") == 0)) {
+		strcpy(label, "Win");
+	}
+	if (strcmp(label, "Prior") == 0) {
+		strcpy(label, "PgUp");
+	}
+	if (strcmp(label, "Next") == 0) {
+		strcpy(label, "PgDown");
+	}
+	if (strcmp(label, "Escape") == 0) {
+		strcpy(label, "Esc");
+	}
+	if ((strcmp(label, "Control_L") == 0) ||
+		(strcmp(label, "Control_R") == 0)) {
+		strcpy(label, "Ctrl");
+	}
+	if (strncmp(label, "ISO_", 4) == 0) { // remove ISO_ prefix
+		strcpy(label, label + 4);
+	}
+	return;
+}
 
 static KeySym
 CheckSymbolAlias(KeySym sym)
@@ -242,7 +309,9 @@ static json_object *FindKeysymsByName(XkbDescPtr xkb, char *name, PSState *state
     keycode[0] = '\0';
     for (int i = 0; i < 4; i++) {
     	for (int a = 0; a < 64; a++) {
-    		keycaps[i][a][0] = '\0';
+    		for (int b = 0; b < 30; b++) {
+	    		keycaps[i][a][b] = '\0';
+	    	}
     	}
     	groupLayers[i] = 0;
     }
@@ -318,10 +387,18 @@ static json_object *FindKeysymsByName(XkbDescPtr xkb, char *name, PSState *state
 //				output = json_object_new_string(buf);
 //				return output;
 //			}
+			if (state->args->UnicodeLabels) {
+				labelSymbol(buf);
+			}
+			if (state->args->altNames) {
+				simplifyLabel(buf);
+		    }
 			strcpy(keycaps[g][l], (char *) buf);
+			fprintf(stderr, "        more debug text: \"%s\"\n", keycaps[0][0]);
 			groupLayers[g] += 1;
         }
 
+		fprintf(stderr, "        debug text: \"%s\"\n", keycaps[g][0]);
         // not sure where to put this, here should be ok ish
         // remove duplicate labels
 		if (strcmp(keycaps[g][0], keycaps[g][1]) == 0) {
@@ -334,7 +411,7 @@ static json_object *FindKeysymsByName(XkbDescPtr xkb, char *name, PSState *state
 
 //		if (((g == 0) && (top->present & G1LX_MASK) == G1LX_MASK) ||
 //	        ((g == 1) && (top->present & G2LX_MASK) == G2LX_MASK)) {		// if all positions per layer have characters
-		if ((g == 0 || g == 1) && (groupLayers[g] > 1) && !duplicate) {
+		if ((g == 0 || g == 1) && (groupLayers[g] > 1) && (!duplicate) && (state->args->UnicodeAlpha || !(keycaps[g][0][0] & '\x80'))) {
             KeySym lower, upper;
 
             XConvertCase(topSyms[(g * 2)], &lower, &upper);
@@ -399,6 +476,8 @@ keycap text position order
     }
 */
 
+
+// extremely messy function
 static json_object *PSSection(FILE *out, PSState *state, XkbSectionPtr section) {
 	json_object *sectionjson = json_object_new_array();
     int r, offset;
@@ -498,11 +577,7 @@ static json_object *PSSection(FILE *out, PSState *state, XkbSectionPtr section) 
                     		strcpy(state->lastkey.baseColor, keycolor);
                     		flag = 1;
 						}
-						textcolor = getcolor(state->geom->label_color->pixel, state); // never changes, this function needs to be restructured
-						if (strcmp(textcolor, state->lastkey.textColor) !=0) {
-							json_object_object_add(properties, "t", json_object_new_string(textcolor));
-							strcpy(state->lastkey.textColor, textcolor);
-						}
+
 //                      PSSetColor(out, state, key->color_ndx);
 //                        fprintf(out, "true 0 %d %d %s %% %s\n", offset, row->top, XkbAtomGetString(dpy, shape->name), XkbKeyNameText(key->name.name, XkbMessage));
                     }
@@ -513,9 +588,22 @@ static json_object *PSSection(FILE *out, PSState *state, XkbSectionPtr section) 
 	            if (state->args->label == LABEL_SYMBOLS) {
 				    float yoffset = 0;
 					if (k == 0) {
+	                   	char textcolorstr[50];
 						yoffset = (double) (section->top + row->top) / 190.0;
 						yoffset -= state->lastkey.y;
 						yoffset -= 1.0;
+
+		                if (state->args->wantColor) {
+							textcolor = getcolor(state->geom->label_color->pixel, state); // never changes, this function needs to be restructured
+	                    	if (state->args->group2Color) {
+								sprintf(textcolorstr, "%s\n\n#0000ff\n#0000ff\n\n\n\n#0000ff", textcolor);
+								textcolor = textcolorstr;
+	   	                 	}
+//							if (strcmp(textcolor, state->lastkey.textColor) !=0) {
+								json_object_object_add(properties, "t", json_object_new_string(textcolor));
+//								strcpy(state->lastkey.textColor, textcolor);
+//							}
+						}
 						json_object_object_add(properties, "a", json_object_new_int(0));
 						json_object_object_add(properties, "y", json_object_new_double((double) yoffset));
 						json_object_object_add(properties, "x", json_object_new_double(((double) section->left) / 190.0));
@@ -678,21 +766,10 @@ GeometryToJSON(FILE *out, XkbFileInfo *pResult, XKBPrintArgs *args)
     state.color = state.black = state.white = -1;
     state.font = -1;
     state.nPages = 0;
-    state.totalKB = 1;
     state.x1 = state.y1 = state.x2 = state.y2 = 0;
     state.args = args;
     state.lastkey.x = 0;
     state.lastkey.y = -1.0;
-
-    if ((args->label == LABEL_SYMBOLS) && (pResult->xkb->ctrls)) {
-        if (args->nTotalGroups == 0)
-            state.totalKB =
-                pResult->xkb->ctrls->num_groups / args->nLabelGroups;
-        else
-            state.totalKB = args->nTotalGroups;
-        if (state.totalKB < 1)
-            state.totalKB = 1;
-    }
 
     json_object_array_add(keyboardjson, metadata(&state)); // add metadata to main array
 
@@ -714,7 +791,7 @@ GeometryToJSON(FILE *out, XkbFileInfo *pResult, XKBPrintArgs *args)
 //            }
         }
 //	    PSPageTrailer(out, &state);
-        state.args->baseLabelGroup += state.args->nLabelGroups;
+//        state.args->baseLabelGroup += state.args->nLabelGroups;
 //    }
     XkbFreeOrderedDrawables(first);
 
