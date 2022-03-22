@@ -1,44 +1,54 @@
 # XKBPrint-KLE
 
-xkbprint-kle is a program that converts the XKB Geometry section of a keyboard configuration to a keyboard-layout-editor.com JSON file.
+xkbprint-kle is a program that converts the XKB Geometry section of a keyboard configuration to a http://keyboard-layout-editor.com JSON file.
 xkbprint-kle is a fork of xkbprint (https://gitlab.freedesktop.org/xorg/app/xkbprint).
 
-## What is this tool for?
+### What is XKB geometry? Can I convent my XModMap layout to JSON?
 
-On Linux, XKB handles keyboards under X11 and Wayland.
-XKB has an extremely obscure format for configuring a physical layout, something along the lines of keyboard-layout-editor.com if it didn't have a GUI.
-Most people configure XKB indirectly using rules or XModMap, and xkbprint-kle will work with those, but it's mainly for custom keymaps made using xkbcomp.
-The output can be directly imported to keyboard-layout-editor.com.
-It includes the key placement specified in the XKB geometry section and the keysyms assigned to each key in the symbols section.
+On Linux, XKB handles keyboards and keyboard configuration under X11 and Wayland.
+XKB has an extremely obscure format for configuring a physical layout, which is the geometry section.
+It's somewhat similar to keyboard-layout-editor.com if it didn't have a GUI.
+
+Most people configure XKB indirectly using rules or XModMap, and although xkbprint-kle will work with those, it will look best with custom keymaps made using xkbcomp.
+
+### What is the output?
+
+The output includes key arrangement specified in the XKB geometry section, with the keysyms shown on each key, as configured in the symbols section.
 If you have a custom XKB configuration, but no custom geometry, xkbprint-kle will still print that configuration on the default XKB geometry.
 
 ## Unsupported parts of XKB
 
 Planned support:
-- Ireggularly shaped keys (creates one big rectangular key)
+- Irregularly shaped keys (a bounding box of the key is made at the moment)
 - Doodads
 - Outputting only a specific group
-- starting from a layer other than 1
+- Starting from a layer other than 1
+- Options for key style
 
 If your keyboard layout has any of the following, please open an issue, preferably with your XKB geometry or configuration.
 I probably won't add support otherwise.
 - Vertical rows
 - Rotated sections
-- Keys with multiple colors/specific shapes (or just keys that don't look correct)
+- Keys with multiple colors on the same key
+- Keys that are more complicated than an ISO or big-ass enter
 
 ## Compiling
-
-`git clone`
-`cd xkbprint-kle`
-`./autogen.sh`
-`make`
+```
+git clone https://github.com/Albert-S-Briscoe/xkbprint-kle.git
+cd xkbprint-kle
+./autogen.sh
+make
+```
 
 ## Examples
 For an up to date list of options:
+
 `./xkbprint-kle -h`
 
-Get information from X server, output layout using the first two layers:
+Get information directly from the X server, output layout using the first two layers:
+
 `./xkbprint-kle $DISPLAY output.json`
 
-Get information from X server, print keycodes on the fronts of keys, put unicode arrows on arrow keys, disable treating unicode alphabetical characters as alphabetical, print 2 groups with 4 layers each and ouptut to output.json:
+Get information directly from the X server, print keycodes on the fronts of keys, put Unicode arrows on arrow keys, disable treating Unicode alphabetical characters as alphabetical, print 2 groups with 4 layers each and output to output.json:
+
 `./xkbprint-kle -k -u --no-unicode-alpha -f extended $DISPLAY output.json`
