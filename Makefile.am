@@ -23,9 +23,9 @@
 bin_PROGRAMS = xkbprint-kle
 
 AM_CFLAGS = $(CWARNFLAGS) $(XKBPRINT_CFLAGS)
-xkbprint_LDADD = $(XKBPRINT_LIBS)
+xkbprint_kle_LDADD = $(XKBPRINT_LIBS)
 
-xkbprint_SOURCES =	\
+xkbprint_kle_SOURCES =	\
         isokeys.h \
         jsongeom.c \
         utils.c \
