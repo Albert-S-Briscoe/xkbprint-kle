@@ -19,8 +19,8 @@ If you have a custom XKB configuration, but no custom geometry, xkbprint-kle wil
 ## Unsupported parts of XKB
 
 Planned support:
+- Doodads (partially done, shape and outline doodads use the bounding box of that shape)
 - Irregularly shaped keys (a bounding box of the key is made at the moment)
-- Doodads
 - Outputting only a specific group
 - Starting from a layer other than 1
 - Options for key style
