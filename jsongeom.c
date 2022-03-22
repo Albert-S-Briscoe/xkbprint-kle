@@ -68,11 +68,153 @@ typedef struct {
     int         size[NLABELS];
 } KeyTop;
 
+static char *getcolor(int Color, PSState *state) {
+	XkbGeometryPtr geom = state->geom;
+	static char output[20];
+    int tmp;
+    register int i;
+
+    i = Color;
+    if (Color < geom->num_colors) {
+        XkbColorPtr color = &geom->colors[i];
+        if (uStrCaseEqual(color->spec, "black"))
+        	strcpy(output, "#000000");
+        else if (uStrCaseEqual(color->spec, "white"))
+        	strcpy(output, "#ffffff");
+        else if ((sscanf(color->spec, "grey%d", &tmp) == 1) ||
+                 (sscanf(color->spec, "gray%d", &tmp) == 1) ||
+                 (sscanf(color->spec, "Grey%d", &tmp) == 1) ||
+                 (sscanf(color->spec, "Gray%d", &tmp) == 1)) {
+        	sprintf(output, "#%1$.2x%1$.2x%1$.2x", (int)(((float) tmp) * -2.56 + 256));
+        }
+        else if ((tmp = (uStrCaseEqual(color->spec, "red") * 100)) ||
+             (sscanf(color->spec, "red%d", &tmp) == 1)) {
+        	sprintf(output, "#%1$.2x000000", (int)(((float) tmp) * 2.56));
+		}
+        else if ((tmp = (uStrCaseEqual(color->spec, "green") * 100)) ||
+             (sscanf(color->spec, "green%d", &tmp) == 1)) {
+        	sprintf(output, "#00%1$.2x00", (int)(((float) tmp) * 2.56));
+		}
+        else if ((tmp = (uStrCaseEqual(color->spec, "blue") * 100)) ||
+             (sscanf(color->spec, "blue%d", &tmp) == 1)) {
+        	sprintf(output, "#0000%1$.2x", (int)(((float) tmp) * 2.56));
+        }
+        else
+        	strcpy(output, "#eeeeee"); // ≈ .9
+    }
+    return output;
+}
+
 // PSShapDef()
 
 // PSProlog() contains some useful calculations on overall size maybe
 
-// PSDoodad() almost certainly is important to look at
+
+static void
+PSDoodad(FILE *out, PSState *state, XkbDoodadPtr doodad)
+{
+    XkbDescPtr xkb;
+    const char *name, *dname;
+    int sz, leading;
+
+    xkb = state->xkb;
+    if (doodad->any.name != None)
+        dname = XkbAtomGetString(xkb->dpy, doodad->any.name);
+    else
+        dname = "NoName";
+    switch (doodad->any.type) {
+    case XkbOutlineDoodad:
+    case XkbSolidDoodad:
+        name = XkbAtomGetString(xkb->dpy,
+                                XkbShapeDoodadShape(xkb->geom,
+                                                    &doodad->shape)->name);
+        if (state->args->wantColor) {
+//	        PSSetColor(out, state, doodad->shape.color_ndx);
+            if (doodad->any.type != XkbOutlineDoodad) {
+//	            fprintf(out, "true %d %d %d %s %% Doodad %s\n",
+//	                    doodad->shape.angle,
+//	                    doodad->shape.left, doodad->shape.top, name, dname);
+//	            PSSetColor(out, state, state->black);
+            }
+//	        fprintf(out, "false %d %d %d %s %% Doodad %s\n",
+//	                doodad->shape.angle,
+//	                doodad->shape.left, doodad->shape.top, name, dname);
+        }
+        else {
+//	        fprintf(out, "false %d %d %d %s %% Doodad %s\n",
+//	                doodad->shape.angle,
+//	                doodad->shape.left, doodad->shape.top, name, dname);
+        }
+        break;
+    case XkbTextDoodad:
+//	    fprintf(out, "%% Doodad %s\n", dname);
+//	    PSSetColor(out, state, doodad->text.color_ndx);
+//	    PSGSave(out, state);
+//	    fprintf(out, "%d %d translate\n", doodad->text.left, doodad->text.top);
+        if (doodad->text.angle != 0)
+//	        fprintf(out, "%s rotate\n",
+//	                XkbGeomFPText(doodad->text.angle, XkbMessage));
+        sz = 14;
+        if (doodad->text.font) {
+//	        FontStuff stuff;
+
+//	        if (CrackXLFDName(doodad->text.font, &stuff)) {
+//	            if (stuff.ptSize > 0)
+//	                sz = stuff.ptSize / 10;
+//	            ClearFontStuff(&stuff);
+//	        }
+        }
+//	    PSSetFont(out, state, FONT_LATIN1, sz, True);
+        leading = (sz * 12) / 10;
+        if (strchr(doodad->text.text, '\n') == NULL) {
+//	        fprintf(out, "0 %d pts moveto 1 -1 scale\n", (leading * 8) / 10);
+//	        fprintf(out, "(%s) show\n", doodad->text.text);
+        }
+        else {
+            char *tmp, *buf, *end;
+            int offset = (leading * 8 / 10);
+
+            tmp = buf = strdup(doodad->text.text);
+            while (tmp != NULL) {
+                end = strchr(tmp, '\n');
+                if (end != NULL)
+                    *end++ = '\0';
+//	            fprintf(out, "0 %d pts moveto 1 -1 scale\n", offset);
+//	            fprintf(out, "(%s) show 1 -1 scale\n", tmp);
+                offset += leading;
+                tmp = end;
+            }
+            free(buf);
+        }
+//	    PSGRestore(out, state);
+        break;
+    case XkbIndicatorDoodad:
+        name = XkbAtomGetString(xkb->dpy,
+                                XkbIndicatorDoodadShape(xkb->geom,
+                                                        &doodad->indicator)->
+                                name);
+        if (state->args->wantColor) {
+//	        PSSetColor(out, state, doodad->indicator.off_color_ndx);
+//	        fprintf(out, "true 0 %d %d %s %% Doodad %s\n",
+//	                doodad->indicator.left, doodad->indicator.top, name, dname);
+//	        PSSetColor(out, state, state->black);
+        }
+//	    fprintf(out, "false 0 %d %d %s %% Doodad %s\n",
+//	            doodad->indicator.left, doodad->indicator.top, name, dname);
+        break;
+    case XkbLogoDoodad:
+        name = XkbAtomGetString(xkb->dpy,
+                                XkbLogoDoodadShape(xkb->geom,
+                                                   &doodad->logo)->name);
+        if (state->args->wantColor)
+//	        PSSetColor(out, state, doodad->shape.color_ndx);
+//	    fprintf(out, "false %d %d %d %s %% Doodad %s\n",
+//	            doodad->shape.angle,
+//	            doodad->shape.left, doodad->shape.top, name, dname);
+        break;
+    }
+    return;
+}
 
 // ignore PSKeycapsSymbol()
 
@@ -269,42 +411,6 @@ CheckSymbolAlias(KeySym sym)
     return sym;
 }
 
-static char *getcolor(int Color, PSState *state) {
-	XkbGeometryPtr geom = state->geom;
-	static char output[20];
-    int tmp;
-    register int i;
-
-    i = Color;
-    if (Color < geom->num_colors) {
-        XkbColorPtr color = &geom->colors[i];
-        if (uStrCaseEqual(color->spec, "black"))
-        	strcpy(output, "#000000");
-        else if (uStrCaseEqual(color->spec, "white"))
-        	strcpy(output, "#ffffff");
-        else if ((sscanf(color->spec, "grey%d", &tmp) == 1) ||
-                 (sscanf(color->spec, "gray%d", &tmp) == 1) ||
-                 (sscanf(color->spec, "Grey%d", &tmp) == 1) ||
-                 (sscanf(color->spec, "Gray%d", &tmp) == 1)) {
-        	sprintf(output, "#%1$.2x%1$.2x%1$.2x", (int)(((float) tmp) * -2.56 + 256));
-        }
-        else if ((tmp = (uStrCaseEqual(color->spec, "red") * 100)) ||
-             (sscanf(color->spec, "red%d", &tmp) == 1)) {
-        	sprintf(output, "#%1$.2x000000", (int)(((float) tmp) * 2.56));
-		}
-        else if ((tmp = (uStrCaseEqual(color->spec, "green") * 100)) ||
-             (sscanf(color->spec, "green%d", &tmp) == 1)) {
-        	sprintf(output, "#00%1$.2x00", (int)(((float) tmp) * 2.56));
-		}
-        else if ((tmp = (uStrCaseEqual(color->spec, "blue") * 100)) ||
-             (sscanf(color->spec, "blue%d", &tmp) == 1)) {
-        	sprintf(output, "#0000%1$.2x", (int)(((float) tmp) * 2.56));
-        }
-        else
-        	strcpy(output, "#eeeeee"); // ≈ .9
-    }
-    return output;
-}
 
 // complicated and probably hard to read label arrangement code
 static void
@@ -553,8 +659,10 @@ static json_object *PSSection(FILE *out, PSState *state, XkbSectionPtr section) 
         while (draw) {
             if (draw->type == XkbDW_Section)
                 PSSection(out, state, draw->u.section);
-//	        else
-//	            PSDoodad(out, state, draw->u.doodad); // unimplemented
+	        else {
+				fprintf(stderr, "Doodad\n");
+	            PSDoodad(out, state, draw->u.doodad);
+	        }
             draw = draw->next;
         }
         XkbFreeOrderedDrawables(first);
