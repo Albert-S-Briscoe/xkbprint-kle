@@ -76,52 +76,40 @@ static Bool             synch;
 static void
 Usage(int argc, char *argv[])
 {
-    fprintf(stderr, "Usage: %s [options] input-file [ output-file ]\n%s",
-            argv[0],
-            "\"(?)\" Means that option is untested. It may or may not do something. It might cause a segmentation fault. I have no idea."
-            "Legal options:\n"
-            "-h,--help     Print this message\n"
-            "-c            Color second group (if enabled)"
+    fprintf(stderr, "Usage: %s [options] {<input-file>|<display>} [<output-file>] \n%s", argv[0],
+            "\n"
+            "Useful options:\n"
+            "-h, --help         Print this message\n"
+            "-c                 Color second group (if enabled)\n"
+            "-f <what>          Change what number of characters are printed on each key. <what> can be:\n"
+            "                       \"basic\": base and shift (default),\n"
+            "                       \"minimal\": base level only,\n"
+            "                       \"none\": no labels (doesn't affect keycodes),\n"
+            "                       \"altgr\": level 3 and 4 on right,\n"
+            "                       \"iso\": 2 groups, 3 levels, 2nd group on the right,\n"
+            "                       \"extended\": iso with 4th level on keycap front.\n"
+            "-k, --keycodes     Also print keycodes, if possible\n"
+            "--keysymnames      Print full keysym names for keys that don't type printable characters (Shift_L instead of Shift)\n"
+            "-lg <num>          Use keyboard group <num> to print labels (?)\n"
+            "-ll <num>          Use shift level <num> to print labels (?)\n" // base level in the future
+            "-o <file>          Specifies output file name\n"
+            "-u                 Replace certain labels (only arrows currently) with Unicode characters\n"
+            "--no-unicode-alpha Disable merging alphabetical unicode characters into uppercase only\n"
+            "\n"
+			"Less useful options:\n"
 #ifdef DEBUG
             "-d [flags]    Report debugging information\n"
-#endif
-            "--diffs       Only show explicit key definitions (?)\n"
-            "-f <what>     Change what number of characters are printed on each key. <what> can be:\n"
-            "                  \"basic\": base and shift (default),\n"
-            "                  \"minimal\": base level only,\n"
-            "                  \"none\": no labels (doesn't affect keycodes),\n"
-            "                  \"altgr\": level 3 and 4 on right,\n"
-            "                  \"iso\": 2 groups, 3 levels, 2nd group on the right,\n"
-            "                  \"extended\": iso with 4th level on keycap front.\n"
-            "-grid <n>     Print a grid with <n> mm resolution (?)\n"
-#ifdef DEBUG
             "-I[<dir>]     Specifies a top level directory\n"
             "              for include directives.  You can\n"
-            "              specify multiple directories. (?)\n"
+            "              specify multiple directories.\n"
 #endif
-            "-k,--keycodes Also print keycodes, if possible\n"
-            "--keysymnames Print full keysym names for keys like shift (Shift_L instead of Shift)"
-            "-label <what> Specifies the label to be drawn on keys\n"
-            "              Legal values for <what> are:\n"
-            "                  none,name,code,symbols (?)\n"
-            "-lc <locale>  Use <locale> for fonts and symbols (?)\n"
-            "-lg <num>     Use keyboard group <num> to print labels (?)\n"
-            "-ll <num>     Use shift level <num> to print labels (?)\n"
-            "-mono         Ignore colors from geometry (?)\n"
-            "-g <num>      Number of groups to print on each key (default: 1)\n"
-            "-nkl <num>    Number of layers to print on each key (?)\n"
-            "-ntg <num>    Total number of groups to print (?)\n"
-            "-o <file>     Specifies output file name\n"
-            "-R[<DIR>]     Specifies the root directory for relative\n"
-            "              path names\n"
-            "-pict <what>  Specifies use of pictographs instead of\n"
-            "              keysym names where available, <what> can\n"
-            "              be \"all\", \"none\" or \"common\" (default) (?)\n"
-            "-synch        Force synchronization (?)\n"
-            "-u            Replace certain labels (only arrows currently) with Unicode characters"
-            "--no-unicode-alpha Disable treating Unicode characters as alphabetical"
+            "-lc <locale>  Use <locale> for fonts and symbols (doesn't affect json output)\n"
+            "--mono        Disable colors from xkb. Might not disable everything.\n"
+            "--no-simplify Disable simplifying weird keysyms (like dead keys) to more normal ones\n"
+            "-R[<DIR>]     Specifies the root directory for relative path names\n"
+            "-synch        Force synchronization\n"
             "-version      Print program version\n"
-            "-w <lvl>      Set warning level (0=none, 10=all) (?)\n"
+            "-w <lvl>      Set warning level (0=none, 10=all) (doesn't do much)\n"
         );
 }
 
@@ -132,22 +120,16 @@ parseArgs(int argc, char *argv[])
 {
     register int i;
 
-    args.grid = 0;
     args.scaleToFit = True;
     args.wantColor = True;
-    args.wantSymbols = COMMON_SYMBOLS;
     args.wantKeycodes = False;
-    args.wantDiffs = False;
     args.UnicodeAlpha = True;
     args.group2Color = False;
     args.altNames = True;
     args.UnicodeLabels = False;
-    args.label = LABEL_AUTO;
+    args.simplifyKeysyms = True;
     args.labelFormat = FORMAT_BASIC;
     args.baseLabelGroup = 0;
-    args.nLabelGroups = 1;
-    args.nLabelLayers = 2;
-    args.nTotalGroups = 0;
     args.labelLevel = 0;
     for (i = 1; i < argc; i++) {
         if ((argv[i][0] != '-') || (uStringEqual(argv[i], "-"))) {
@@ -182,9 +164,6 @@ parseArgs(int argc, char *argv[])
             uInformation("Setting debug flags to %d\n", debugFlags);
         }
 #endif
-        else if (strcmp(argv[i], "--diffs") == 0) {
-            args.wantDiffs = True;
-        }
         else if (strcmp(argv[i], "-f") == 0) {
             if (++i >= argc) {
                 uWarning("Label format not specified\n");
@@ -207,43 +186,11 @@ parseArgs(int argc, char *argv[])
                 uAction("Ignored\n");
             }
         }
-        else if (strcmp(argv[i], "-grid") == 0) {
-            int tmp;
-
-            if (++i >= argc) {
-                uWarning("Grid frequency not specified\n");
-                uAction("Trailing \"-grid\" option ignored\n");
-            }
-            else if ((sscanf(argv[i], "%i", &tmp) != 1) || (tmp < 1)) {
-                uWarning("Grid frequency must be an integer > zero\n");
-                uAction("Illegal frequency %d ignored\n", tmp);
-            }
-            else
-                args.grid = tmp;
-        }
         else if ((strcmp(argv[i], "-k") == 0) || (strcmp(argv[i], "--keycodes") == 0)) {
             args.wantKeycodes = True;
         }
         else if (strcmp(argv[i], "--keysymnames") == 0) {
             args.altNames = False;
-        }
-        else if (strcmp(argv[i], "-label") == 0) {
-            if (++i >= argc) {
-                uWarning("Label type not specified\n");
-                uAction("Trailing \"-label\" option ignored\n");
-            }
-            else if (uStrCaseEqual(argv[i], "none"))
-                args.label = LABEL_NONE;
-            else if (uStrCaseEqual(argv[i], "name"))
-                args.label = LABEL_KEYNAME;
-            else if (uStrCaseEqual(argv[i], "code"))
-                args.label = LABEL_KEYCODE;
-            else if (uStrCaseEqual(argv[i], "symbols"))
-                args.label = LABEL_SYMBOLS;
-            else {
-                uWarning("Unknown label type \"%s\" specified\n", argv[i]);
-                uAction("Ignored\n");
-            }
         }
         else if (strcmp(argv[i], "-lc") == 0) {
             if (++i >= argc) {
@@ -283,53 +230,11 @@ parseArgs(int argc, char *argv[])
             else
                 args.labelLevel = tmp - 1;
         }
-        else if (strcmp(argv[i], "-mono") == 0) {
+        else if (strcmp(argv[i], "--mono") == 0) {
             args.wantColor = False;
         }
-        else if (strcmp(argv[i], "-g") == 0) {
-            int tmp;
-
-            if (++i >= argc) {
-                uWarning("Number of groups per key not specified\n");
-                uAction("Trailing \"-g\" option ignored\n");
-            }
-            else if ((sscanf(argv[i], "%i", &tmp) != 1) || (tmp < 1) ||
-                     (tmp > 2)) {
-                uWarning("Groups per key must be in the range 1..2\n");
-                uAction("Illegal number of groups %d ignored\n", tmp);
-            }
-            else
-                args.nLabelGroups = tmp;
-        }
-        else if (strcmp(argv[i], "-nkl") == 0) {
-            int tmp;
-
-            if (++i >= argc) {
-                uWarning("Number of layers per key not specified\n");
-                uAction("Trailing \"-nkl\" option ignored\n");
-            }
-            else if ((sscanf(argv[i], "%i", &tmp) != 1) || (tmp < 1) ||
-                     (tmp > 64)) {
-                uWarning("Layers per key must be in the range 1..64\n");
-                uAction("Illegal number of layers %d ignored\n", tmp);
-            }
-            else
-                args.nLabelLayers = tmp;
-        }
-        else if (strcmp(argv[i], "-ntg") == 0) {
-            int tmp;
-
-            if (++i >= argc) {
-                uWarning("Total number of groups not specified\n");
-                uAction("Trailing \"-ntg\" option ignored\n");
-            }
-            else if ((sscanf(argv[i], "%i", &tmp) != 1) || (tmp < 1) ||
-                     (tmp > 4)) {
-                uWarning("Total number of groups must be in the range 1..4\n");
-                uAction("Illegal number of groups %d ignored\n", tmp);
-            }
-            else
-                args.nTotalGroups = tmp;
+        else if (strcmp(argv[i], "--no-simplify") == 0) {
+            args.simplifyKeysyms = False;
         }
         else if (strcmp(argv[i], "-o") == 0) {
             if (++i >= argc) {
@@ -354,22 +259,6 @@ parseArgs(int argc, char *argv[])
             }
             else
                 rootDir = &argv[i][2];
-        }
-        else if (strcmp(argv[i], "-pict") == 0) {
-            if (++i >= argc) {
-                uWarning("No level of pictographs specified\n");
-                uAction("Trailing \"-pict\" option ignored\n");
-            }
-            else if (strcmp(argv[i], "none") == 0)
-                args.wantSymbols = NO_SYMBOLS;
-            else if (strcmp(argv[i], "common") == 0)
-                args.wantSymbols = COMMON_SYMBOLS;
-            else if (strcmp(argv[i], "all") == 0)
-                args.wantSymbols = ALL_SYMBOLS;
-            else if (outputFile != NULL) {
-                uWarning("Unknown pictograph level specified\n");
-                uAction("Ignoring illegal value %s\n", argv[i]);
-            }
         }
         else if ((strcmp(argv[i], "-synch") == 0) ||
                  (strcmp(argv[i], "-s") == 0)) {
@@ -640,7 +529,7 @@ main(int argc, char *argv[])
         }
         if ((tmp & XkmKeyNamesMask) != 0)
             args.wantKeycodes = False;
-        if (args.label == LABEL_AUTO) {
+/*        if (args.label == LABEL_AUTO) {
             if (result.defined & XkmSymbolsMask)
                 args.label = LABEL_SYMBOLS;
             else if (result.defined & XkmKeyNamesMask)
@@ -658,7 +547,7 @@ main(int argc, char *argv[])
             uError("XKM file \"%s\" doesn't have symbols\n", inputFile);
             uAction("Cannot label keys as requested. Exiting\n");
             ok = False;
-        }
+        }*/
     }
     else if (inDpy != NULL) {
         bzero((char *) &result, sizeof(result));
@@ -671,8 +560,6 @@ main(int argc, char *argv[])
         if (XkbGetGeometry(inDpy, result.xkb) != Success) {
             uFatalError("Cannot load geometry for %s\n", inDpyName);
         }
-        if (args.label == LABEL_AUTO)
-            args.label = LABEL_SYMBOLS;
     }
     else {
         fprintf(stderr, "Cannot open \"%s\" to read geometry\n", inputFile);

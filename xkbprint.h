@@ -56,18 +56,11 @@
 
 
 typedef struct _XKBPrintArgs {
-    int         grid;
-    int         label;
     int         baseLabelGroup;
-    int         nLabelGroups;
-    int			nLabelLayers;
-    int         nTotalGroups;
     int         labelLevel;
-    int         wantSymbols;
     int			labelFormat;
     int			profile;
     Bool        wantKeycodes;
-    Bool        wantDiffs;
     Bool        scaleToFit;
     Bool        wantColor;
     Bool        level1;
@@ -75,6 +68,7 @@ typedef struct _XKBPrintArgs {
     Bool		UnicodeLabels; // translate certain keys to Unicode
     Bool		group2Color; // color 2nd group blue
     Bool		altNames;
+    Bool		simplifyKeysyms;
 } XKBPrintArgs;
 
 extern Bool
