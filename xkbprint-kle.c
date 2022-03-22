@@ -111,7 +111,7 @@ Usage(int argc, char *argv[])
             "-version      Print program version\n"
             "-w <lvl>      Set warning level (0=none, 10=all) (doesn't do much)\n"
             "\n"
-            "Example: ./xkbprint-kle -k -u --no-unicode-alpha -f extended :0 output.json"
+            "Example: ./xkbprint-kle -k -u --no-unicode-alpha -f extended $DISPLAY output.json\n"
         );
 }
 
