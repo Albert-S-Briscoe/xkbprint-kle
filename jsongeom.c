@@ -26,7 +26,7 @@
 #include <stdlib.h>
 
 #include "utils.h"
-#include "xkbprint.h"
+#include "xkbprint-kle.h"
 #include "isokeys.h"
 
 typedef struct {

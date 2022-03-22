@@ -23,8 +23,7 @@ dnl Process this file with autoconf to create configure.
 
 # Initialize Autoconf
 AC_PREREQ([2.60])
-AC_INIT([xkbprint], [1.0.5],
-        [https://gitlab.freedesktop.org/xorg/app/xkbprint/issues], [xkbprint])
+AC_INIT([xkbprint-kle], [0.1.0])
 AC_CONFIG_SRCDIR([Makefile.am])
 AC_CONFIG_HEADERS([config.h])
 # Needed for asprintf on GNU libc
@@ -45,6 +44,5 @@ AC_CHECK_FUNCS([asprintf])
 PKG_CHECK_MODULES(XKBPRINT, [xkbfile x11 xkbcommon xproto >= 7.0.17 json-c])
 
 AC_CONFIG_FILES([
-	Makefile
-	man/Makefile])
+	Makefile])
 AC_OUTPUT

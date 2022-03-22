@@ -76,4 +76,4 @@ core
 #		Edit the following section as needed
 # For example, !report.pc overrides *.pc. See 'man gitignore'
 # 
-xkbprint
+xkbprint-kle

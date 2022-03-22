@@ -48,7 +48,7 @@
 #include <stdlib.h>
 
 #include "utils.h"
-#include "xkbprint.h"
+#include "xkbprint-kle.h"
 
 /***====================================================================***/
 
@@ -80,7 +80,7 @@ Usage(int argc, char *argv[])
             "\n"
             "Useful options:\n"
             "-h, --help         Print this message\n"
-            "-c                 Color second group (if enabled)\n"
+            "-c                 Color second printed group blue\n"
             "-f <what>          Change what number of characters are printed on each key. <what> can be:\n"
             "                       \"basic\": base and shift (default),\n"
             "                       \"minimal\": base level only,\n"
@@ -110,6 +110,8 @@ Usage(int argc, char *argv[])
             "-synch        Force synchronization\n"
             "-version      Print program version\n"
             "-w <lvl>      Set warning level (0=none, 10=all) (doesn't do much)\n"
+            "\n"
+            "Example: ./xkbprint-kle -k -u --no-unicode-alpha -f extended :0 output.json"
         );
 }
 

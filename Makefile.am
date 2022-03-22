@@ -19,8 +19,8 @@
 #  TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 #  PERFORMANCE OF THIS SOFTWARE.
 
-SUBDIRS = man
-bin_PROGRAMS = xkbprint
+#SUBDIRS = man
+bin_PROGRAMS = xkbprint-kle
 
 AM_CFLAGS = $(CWARNFLAGS) $(XKBPRINT_CFLAGS)
 xkbprint_LDADD = $(XKBPRINT_LIBS)
@@ -30,8 +30,8 @@ xkbprint_SOURCES =	\
         jsongeom.c \
         utils.c \
         utils.h \
-        xkbprint.c \
-        xkbprint.h
+        xkbprint-kle.c \
+        xkbprint-kle.h
 
 MAINTAINERCLEANFILES = ChangeLog INSTALL
 

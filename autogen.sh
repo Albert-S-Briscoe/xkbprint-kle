@@ -9,8 +9,8 @@ cd "$srcdir"
 autoreconf -v --install || exit 1
 cd "$ORIGDIR" || exit $?
 
-git config --local --get format.subjectPrefix >/dev/null 2>&1 ||
-    git config --local format.subjectPrefix "PATCH app/xkbprint"
+#git config --local --get format.subjectPrefix >/dev/null 2>&1 ||
+#    git config --local format.subjectPrefix "PATCH app/xkbprint"
 
 if test -z "$NOCONFIGURE"; then
     exec "$srcdir"/configure "$@"
