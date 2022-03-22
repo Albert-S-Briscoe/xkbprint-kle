@@ -90,13 +90,15 @@ Usage(int argc, char *argv[])
             "                       \"extended\": iso with 4th level on keycap front.\n"
             "-k, --keycodes     Also print keycodes, if possible\n"
             "--keysymnames      Print full keysym names for keys that don't type printable characters (Shift_L instead of Shift)\n"
-            "-lg <num>          Use keyboard group <num> to print labels (?)\n"
-            "-ll <num>          Use shift level <num> to print labels (?)\n" // base level in the future
-            "-o <file>          Specifies output file name\n"
-            "-u                 Replace certain labels (only arrows currently) with Unicode characters\n"
             "--no-unicode-alpha Disable merging alphabetical unicode characters into uppercase only\n"
+            "-o <file>          Specifies output file name\n"
+            "-p <profile>       Specify the KLE keycap profile. Valid options for <profile> are:\n"
+            "                       \"SA\", \"DSA\", \"DCS\", \"OEM\", \"CHICKLET\", \"FLAT\"\n"
+            "-u                 Replace certain labels (only arrows currently) with Unicode characters\n"
             "\n"
 			"Less useful options:\n"
+            "-lg <num>          Use keyboard group <num> to print labels (?)\n"
+            "-ll <num>          Use shift level <num> to print labels (?)\n" // base level in the future
 #ifdef DEBUG
             "-d [flags]    Report debugging information\n"
             "-I[<dir>]     Specifies a top level directory\n"
@@ -133,6 +135,7 @@ parseArgs(int argc, char *argv[])
     args.labelFormat = FORMAT_BASIC;
     args.baseLabelGroup = 0;
     args.labelLevel = 0;
+    args.profile = PROFILE_DEFAULT;
     for (i = 1; i < argc; i++) {
         if ((argv[i][0] != '-') || (uStringEqual(argv[i], "-"))) {
             if (inputFile == NULL) {
@@ -249,6 +252,28 @@ parseArgs(int argc, char *argv[])
             }
             else
                 outputFile = argv[i];
+        }
+        else if (strcmp(argv[i], "-p") == 0) {
+            if (++i >= argc) {
+                uWarning("Key profile not specified\n");
+                uAction("Trailing \"-p\" option ignored\n");
+            }
+            else if (uStrCaseEqual(argv[i], "SA"))
+                args.profile = PROFILE_SA;
+            else if (uStrCaseEqual(argv[i], "DSA"))
+                args.profile = PROFILE_DSA;
+            else if (uStrCaseEqual(argv[i], "DCS"))
+                args.profile = PROFILE_DCS;
+            else if (uStrCaseEqual(argv[i], "OEM"))
+                args.profile = PROFILE_OEM;
+            else if (uStrCaseEqual(argv[i], "CHICKLET"))
+                args.profile = PROFILE_CHICKLET;
+            else if (uStrCaseEqual(argv[i], "FLAT"))
+                args.profile = PROFILE_FLAT;
+            else {
+                uWarning("Unknown key profile \"%s\" specified\n", argv[i]);
+                uAction("Ignored\n");
+            }
         }
         else if (strncmp(argv[i], "-R", 2) == 0) {
             if (argv[i][2] == '\0') {

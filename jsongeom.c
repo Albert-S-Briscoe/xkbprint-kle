@@ -32,6 +32,8 @@
 typedef struct {
 	float				x;
 	float				y;
+	int					profile;
+	Bool				ghosted;
 	float				height;
 	char				baseColor[8];
 	char				textColor[8];
@@ -85,19 +87,19 @@ static char *getcolor(int Color, PSState *state) {
                  (sscanf(color->spec, "gray%d", &tmp) == 1) ||
                  (sscanf(color->spec, "Grey%d", &tmp) == 1) ||
                  (sscanf(color->spec, "Gray%d", &tmp) == 1)) {
-        	sprintf(output, "#%1$.2x%1$.2x%1$.2x", (int)(((float) tmp) * -2.56 + 256));
+        	sprintf(output, "#%1$.2x%1$.2x%1$.2x", (int)(((float) tmp) * -2.55 + 255));
         }
         else if ((tmp = (uStrCaseEqual(color->spec, "red") * 100)) ||
              (sscanf(color->spec, "red%d", &tmp) == 1)) {
-        	sprintf(output, "#%1$.2x000000", (int)(((float) tmp) * 2.56));
+        	sprintf(output, "#%1$.2x0000", (int)(((float) tmp) * 2.55));
 		}
         else if ((tmp = (uStrCaseEqual(color->spec, "green") * 100)) ||
              (sscanf(color->spec, "green%d", &tmp) == 1)) {
-        	sprintf(output, "#00%1$.2x00", (int)(((float) tmp) * 2.56));
+        	sprintf(output, "#00%1$.2x00", (int)(((float) tmp) * 2.55));
 		}
         else if ((tmp = (uStrCaseEqual(color->spec, "blue") * 100)) ||
              (sscanf(color->spec, "blue%d", &tmp) == 1)) {
-        	sprintf(output, "#0000%1$.2x", (int)(((float) tmp) * 2.56));
+        	sprintf(output, "#0000%1$.2x", (int)(((float) tmp) * 2.55));
         }
         else
         	strcpy(output, "#eeeeee"); // ≈ .9
@@ -110,24 +112,37 @@ static char *getcolor(int Color, PSState *state) {
 // PSProlog() contains some useful calculations on overall size maybe
 
 
-static void
-PSDoodad(FILE *out, PSState *state, XkbDoodadPtr doodad)
+static json_object
+*PSDoodad(FILE *out, PSState *state, XkbDoodadPtr doodad)
 {
     XkbDescPtr xkb;
-    const char *name, *dname;
+    const char *name = "", *dname;
+	float yoffset = 0;
     int sz, leading;
+	char *keycolor;
+    float x1 = 0.0, y1 = 0.0, x2 = 1.0, y2 = 1.0;
+    json_object *output = json_object_new_array();
+	json_object *properties = json_object_new_object();
 
     xkb = state->xkb;
-    if (doodad->any.name != None)
+    if (doodad->any.name != None) {
         dname = XkbAtomGetString(xkb->dpy, doodad->any.name);
-    else
+	}
+    else {
         dname = "NoName";
+    }
+
+//	fprintf(stderr, "Doodad: dname: \"%s\"\n", dname);
+
     switch (doodad->any.type) {
     case XkbOutlineDoodad:
     case XkbSolidDoodad:
         name = XkbAtomGetString(xkb->dpy,
                                 XkbShapeDoodadShape(xkb->geom,
                                                     &doodad->shape)->name);
+//		fprintf(stderr, " Outline/Solid Doodad \"%s\"\n", name);
+
+
         if (state->args->wantColor) {
 //	        PSSetColor(out, state, doodad->shape.color_ndx);
             if (doodad->any.type != XkbOutlineDoodad) {
@@ -139,14 +154,56 @@ PSDoodad(FILE *out, PSState *state, XkbDoodadPtr doodad)
 //	        fprintf(out, "false %d %d %d %s %% Doodad %s\n",
 //	                doodad->shape.angle,
 //	                doodad->shape.left, doodad->shape.top, name, dname);
+			keycolor = getcolor(doodad->shape.color_ndx, state);
+        	if (strcmp(keycolor, state->lastkey.baseColor) != 0) {
+        		json_object_object_add(properties, "c", json_object_new_string(keycolor));
+        		strcpy(state->lastkey.baseColor, keycolor);
+			}
+
         }
         else {
 //	        fprintf(out, "false %d %d %d %s %% Doodad %s\n",
 //	                doodad->shape.angle,
 //	                doodad->shape.left, doodad->shape.top, name, dname);
         }
+
+		for (int i = 0; i < state->geom->num_shapes; i++) {
+//			PSShapeDef(out, state, &state->geom->shapes[i]);
+			//        file  state     shape
+//			fprintf(stderr, "   Shape name: \"%s\"\n", XkbAtomGetString(state->dpy, state->geom->shapes[i].name));
+			if (strcmp(name, XkbAtomGetString(state->dpy, state->geom->shapes[i].name)) == 0) {
+//				fprintf(stderr, "    Got it\n");
+				x1 = ((double) state->geom->shapes[i].bounds.x1) / 190.0;
+				y1 = ((double) state->geom->shapes[i].bounds.y1) / 190.0;
+				x2 = ((double) state->geom->shapes[i].bounds.x2) / 190.0;
+				y2 = ((double) state->geom->shapes[i].bounds.y2) / 190.0;
+				break;
+			}
+		}
+
+
+		yoffset = (double) (doodad->shape.top) / 190.0 + y1;
+		yoffset -= state->lastkey.y;
+		yoffset -= 1.0;
+		json_object_object_add(properties, "x", json_object_new_double((double) doodad->shape.left / 190.0 + x1));
+		json_object_object_add(properties, "y", json_object_new_double((double) yoffset));
+		json_object_object_add(properties, "w", json_object_new_double(x2 - x1));
+		json_object_object_add(properties, "h", json_object_new_double(y2 - y1));
+//		if (!state->lastkey.ghosted) {
+//			json_object_object_add(properties, "g", json_object_new_boolean(True));
+//			state->lastkey.ghosted = True;
+//		}
+		if (state->lastkey.profile != PROFILE_FLAT) {
+			json_object_object_add(properties, "p", json_object_new_string("FLAT"));
+			state->lastkey.profile = PROFILE_FLAT;
+		}
+
+		json_object_array_add(output, properties);
+		state->lastkey.y = ((double) (doodad->shape.top) / 190.0) + y1;
+
         break;
     case XkbTextDoodad:
+//		fprintf(stderr, " Text Doodad\n");
 //	    fprintf(out, "%% Doodad %s\n", dname);
 //	    PSSetColor(out, state, doodad->text.color_ndx);
 //	    PSGSave(out, state);
@@ -193,7 +250,8 @@ PSDoodad(FILE *out, PSState *state, XkbDoodadPtr doodad)
                                 XkbIndicatorDoodadShape(xkb->geom,
                                                         &doodad->indicator)->
                                 name);
-        if (state->args->wantColor) {
+//		fprintf(stderr, " Indicator Doodad \"%s\"\n", name);
+		if (state->args->wantColor) {
 //	        PSSetColor(out, state, doodad->indicator.off_color_ndx);
 //	        fprintf(out, "true 0 %d %d %s %% Doodad %s\n",
 //	                doodad->indicator.left, doodad->indicator.top, name, dname);
@@ -206,6 +264,7 @@ PSDoodad(FILE *out, PSState *state, XkbDoodadPtr doodad)
         name = XkbAtomGetString(xkb->dpy,
                                 XkbLogoDoodadShape(xkb->geom,
                                                    &doodad->logo)->name);
+//		fprintf(stderr, " Logo Doodad \"%s\"\n", name);
         if (state->args->wantColor)
 //	        PSSetColor(out, state, doodad->shape.color_ndx);
 //	    fprintf(out, "false %d %d %d %s %% Doodad %s\n",
@@ -213,7 +272,8 @@ PSDoodad(FILE *out, PSState *state, XkbDoodadPtr doodad)
 //	            doodad->shape.left, doodad->shape.top, name, dname);
         break;
     }
-    return;
+	json_object_array_add(output, json_object_new_string(""));
+    return output;
 }
 
 // ignore PSKeycapsSymbol()
@@ -659,10 +719,9 @@ static json_object *PSSection(FILE *out, PSState *state, XkbSectionPtr section) 
         while (draw) {
             if (draw->type == XkbDW_Section)
                 PSSection(out, state, draw->u.section);
-	        else {
-				fprintf(stderr, "Doodad\n");
-	            PSDoodad(out, state, draw->u.doodad);
-	        }
+//	        else {
+//	            PSDoodad(out, state, draw->u.doodad);
+//	        }
             draw = draw->next;
         }
         XkbFreeOrderedDrawables(first);
@@ -770,6 +829,40 @@ static json_object *PSSection(FILE *out, PSState *state, XkbSectionPtr section) 
 					}
 					if (key->gap && (k != 0)) {
 						json_object_object_add(properties, "x", json_object_new_double((double) key->gap / 190.0));
+						flag = 1;
+					}
+					if (state->lastkey.ghosted) {
+						json_object_object_add(properties, "g", json_object_new_boolean(False));
+						state->lastkey.ghosted = False;
+						flag = 1;
+					}
+					if (state->lastkey.profile != state->args->profile) {
+						switch (state->args->profile) {
+						case PROFILE_SA:
+							json_object_object_add(properties, "p", json_object_new_string("SA"));
+							break;
+						case PROFILE_DSA:
+							json_object_object_add(properties, "p", json_object_new_string("DSA"));
+							break;
+						case PROFILE_DCS:
+							json_object_object_add(properties, "p", json_object_new_string("DCS"));
+							break;
+						case PROFILE_OEM:
+							json_object_object_add(properties, "p", json_object_new_string("OEM"));
+							break;
+						case PROFILE_CHICKLET:
+							json_object_object_add(properties, "p", json_object_new_string("CHICKLET"));
+							break;
+						case PROFILE_FLAT:
+							json_object_object_add(properties, "p", json_object_new_string("FLAT"));
+							break;
+						case PROFILE_DEFAULT:
+						default:
+//							fprintf(stderr, "The default profile can be buggy. If you see inconsistencies, specify a profile with -p");
+							json_object_object_add(properties, "p", json_object_new_string(" ")); // can't be an empty string because ???
+							break;
+						}
+						state->lastkey.profile = state->args->profile;
 						flag = 1;
 					}
 					if (shape->bounds.x2 != 190) {
@@ -931,6 +1024,8 @@ GeometryToJSON(FILE *out, XkbFileInfo *pResult, XKBPrintArgs *args)
     state.args = args;
     state.lastkey.x = 0;
     state.lastkey.y = -1.0;
+    state.lastkey.ghosted = False;
+//    state.lastkey.profile = PROFILE_DEFAULT;
 
     json_object_array_add(keyboardjson, metadata(&state)); // add metadata to main array
 
@@ -946,12 +1041,13 @@ GeometryToJSON(FILE *out, XkbFileInfo *pResult, XKBPrintArgs *args)
                	json_object_array_add(keyboardjson, json_object_array_get_idx(tempobject, i));
 			}
 		}
-//	    else {
-//		     PSDoodad(out, &state, draw->u.doodad); // temp disabled
-//	    }
+	    else {
+		     json_object_array_add(keyboardjson, PSDoodad(out, &state, draw->u.doodad));
+	    }
     }
     XkbFreeOrderedDrawables(first);
 
 	fprintf(out, "%s\n", json_object_to_json_string(keyboardjson));
+	fflush(stderr);
     return True;
 }
