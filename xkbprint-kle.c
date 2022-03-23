@@ -81,6 +81,7 @@ Usage(int argc, char *argv[])
             "Useful options:\n"
             "-h, --help         Print this message\n"
             "-c                 Color second printed group blue\n"
+            "-d                 Enable doodads\n"
             "-f <what>          Change what number of characters are printed on each key. <what> can be:\n"
             "                       \"basic\": base and shift (default),\n"
             "                       \"minimal\": base level only,\n"
@@ -90,7 +91,7 @@ Usage(int argc, char *argv[])
             "                       \"extended\": iso with 4th level on keycap front.\n"
             "-k, --keycodes     Also print keycodes, if possible\n"
             "--keysymnames      Print full keysym names for keys that don't type printable characters (Shift_L instead of Shift)\n"
-            "--no-unicode-alpha Disable merging alphabetical unicode characters into uppercase only\n"
+            "--no-unicode-alpha Disable merging alphabetical Unicode characters into uppercase only\n"
             "-o <file>          Specifies output file name\n"
             "-p <profile>       Specify the KLE keycap profile. Valid options for <profile> are:\n"
             "                       \"SA\", \"DSA\", \"DCS\", \"OEM\", \"CHICKLET\", \"FLAT\"\n"
@@ -100,7 +101,7 @@ Usage(int argc, char *argv[])
             "-lg <num>          Use keyboard group <num> to print labels (?)\n"
             "-ll <num>          Use shift level <num> to print labels (?)\n" // base level in the future
 #ifdef DEBUG
-            "-d [flags]    Report debugging information\n"
+            "-D [flags]    Report debugging information\n"
             "-I[<dir>]     Specifies a top level directory\n"
             "              for include directives.  You can\n"
             "              specify multiple directories.\n"
@@ -124,18 +125,19 @@ parseArgs(int argc, char *argv[])
 {
     register int i;
 
+    args.altNames = True;
+    args.doodads = False;
+    args.group2Color = False;
     args.scaleToFit = True;
+    args.simplifyKeysyms = True;
+    args.UnicodeAlpha = True;
+    args.UnicodeLabels = False;
     args.wantColor = True;
     args.wantKeycodes = False;
-    args.UnicodeAlpha = True;
-    args.group2Color = False;
-    args.altNames = True;
-    args.UnicodeLabels = False;
-    args.simplifyKeysyms = True;
     args.labelFormat = FORMAT_BASIC;
+    args.profile = PROFILE_DEFAULT;
     args.baseLabelGroup = 0;
     args.labelLevel = 0;
-    args.profile = PROFILE_DEFAULT;
     for (i = 1; i < argc; i++) {
         if ((argv[i][0] != '-') || (uStringEqual(argv[i], "-"))) {
             if (inputFile == NULL) {
@@ -158,8 +160,11 @@ parseArgs(int argc, char *argv[])
         else if (strcmp(argv[i], "-c") == 0) {
             args.group2Color = True;
         }
-#ifdef DEBUG
         else if (strcmp(argv[i], "-d") == 0) {
+            args.doodads = True;
+        }
+#ifdef DEBUG
+        else if (strcmp(argv[i], "-D") == 0) {
             if ((i >= (argc - 1)) || (!isdigit(argv[i + 1][0]))) {
                 debugFlags = 1;
             }

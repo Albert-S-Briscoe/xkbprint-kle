@@ -121,7 +121,7 @@ static json_object
     int sz, leading;
 	char *keycolor;
     float x1 = 0.0, y1 = 0.0, x2 = 1.0, y2 = 1.0;
-    json_object *output = json_object_new_array();
+    json_object *output;
 	json_object *properties = json_object_new_object();
 
     xkb = state->xkb;
@@ -137,6 +137,8 @@ static json_object
     switch (doodad->any.type) {
     case XkbOutlineDoodad:
     case XkbSolidDoodad:
+    	output = json_object_new_array();
+
         name = XkbAtomGetString(xkb->dpy,
                                 XkbShapeDoodadShape(xkb->geom,
                                                     &doodad->shape)->name);
@@ -201,6 +203,8 @@ static json_object
 		json_object_array_add(output, properties);
 		state->lastkey.y = ((double) (doodad->shape.top) / 190.0) + y1;
 
+		json_object_array_add(output, json_object_new_string(""));
+		return output;
         break;
     case XkbTextDoodad:
 //		fprintf(stderr, " Text Doodad\n");
@@ -272,7 +276,8 @@ static json_object
 //	            doodad->shape.left, doodad->shape.top, name, dname);
         break;
     }
-	json_object_array_add(output, json_object_new_string(""));
+//	json_object_array_add(output, json_object_new_string(""));
+	output = json_object_new_object(); // lazy way to fix alignment issues because of not implementing every doodad
     return output;
 }
 
@@ -1002,6 +1007,117 @@ static json_object *metadata(PSState *state) {
     return metadata;
 }
 
+static Bool
+copyArray(json_object *array, json_object *input, const size_t start, const Bool get) {
+	if (!json_object_is_type(array, json_type_array) ||
+		!json_object_is_type(input, json_type_array) ||
+		start > json_object_array_length(input))
+		return False;
+
+	for (size_t i = start; i < json_object_array_length(input); i++) {
+		if (get)
+			json_object_get(json_object_array_get_idx(input, i));
+		json_object_array_add(array, json_object_array_get_idx(input, i));
+	}
+	return True;
+}
+
+static void
+clearArray(json_object *array) {
+	size_t size = json_object_array_length(array);
+	json_object_array_del_idx(array, 0, size);
+}
+
+// original is the array to be split and contains the first part after. half is the object to store the second part in. keep is the number of objects in the first part.
+// I don't like these variable names but I can't think of anything better.
+static Bool
+splitArray(json_object *original, json_object *half, size_t keep) {
+	size_t i;
+
+	if (keep == json_object_array_length(original))
+		return True;
+
+	// copy 2nd half of original into half
+	if (!copyArray(half, original, keep, True))
+		return False;
+
+	// delete the 2nd part of original, or more specifically, delete (original's length - keep) objects, starting with the object at keep's value.
+	i = json_object_array_length(original) - keep;
+	json_object_array_del_idx(original, keep, i);
+
+	return True;
+}
+
+// If I implemented vertical rows, this would give 2nd value for a change in y after the start of the row.
+// gets y offset of a row
+static float
+getYValue(json_object *row) {
+	json_object *yValue;
+
+	if (json_object_object_get_ex(json_object_array_get_idx(row, 0), "y", &yValue)) {
+		return (float) json_object_get_double(yValue);
+	}
+	return 0.0;
+}
+
+static void
+setYValue(json_object *row, float y) {
+	json_object *properties = json_object_array_get_idx(row, 0);
+
+	if (properties == NULL) {
+		fprintf(stderr, "Something broke: Found a row with zero keys. Please report it.");
+		return;
+	}
+
+	if (json_object_is_type(properties, json_type_object)) {
+		json_object_object_add(properties, "y", json_object_new_double(y));
+	}
+	else if (!json_object_is_type(properties, json_type_object)) {
+		json_object *temp = json_object_new_array();
+		size_t i;
+
+		properties = json_object_new_object();
+		json_object_object_add(properties, "y", json_object_new_double(y));
+		json_object_array_add(temp, properties);
+
+		copyArray(temp, row, 0, True); // copy row to temp
+
+		i = json_object_array_length(row);
+		json_object_array_del_idx(row, 0, i); // delete all entries in row
+
+		copyArray(row, temp, 0, False); // copy temp back to row
+	}
+}
+
+static Bool
+moveArrayItem(json_object *array, size_t from, size_t to) {
+	json_object *item = json_object_new_array();
+	json_object *temp = json_object_new_array();
+
+	if (!json_object_is_type(array, json_type_array) ||
+		from > json_object_array_length(array) ||
+		to > json_object_array_length(array))
+		return False;
+
+	// split array into 3 groups: everything before the specified index, the specified index, and everything after.
+	splitArray(array, item, from);
+	splitArray(item, temp, 1);
+
+	// merge the before and after, and clear the temp array.
+	copyArray(array, temp, 0, True);
+	clearArray(temp);
+
+	// split the main array into two sections, before the specified "to" index and after.
+	splitArray(array, temp, to);
+
+	// merge the before section, the moved item, and after, to get the output.
+	copyArray(array, item, 0, False);
+	copyArray(array, temp, 0, False);
+
+	return True;
+}
+
+
 Bool
 GeometryToJSON(FILE *out, XkbFileInfo *pResult, XKBPrintArgs *args)
 {
@@ -1041,13 +1157,15 @@ GeometryToJSON(FILE *out, XkbFileInfo *pResult, XKBPrintArgs *args)
                	json_object_array_add(keyboardjson, json_object_array_get_idx(tempobject, i));
 			}
 		}
-	    else {
-		     json_object_array_add(keyboardjson, PSDoodad(out, &state, draw->u.doodad));
+	    else if (args->doodads) {
+	    	json_object *tempobject = PSDoodad(out, &state, draw->u.doodad);
+	    	if (json_object_is_type(tempobject, json_type_array))
+				json_object_array_add(keyboardjson, tempobject);
 	    }
     }
     XkbFreeOrderedDrawables(first);
 
-	fprintf(out, "%s\n", json_object_to_json_string(keyboardjson));
-	fflush(stderr);
+	fprintf(out, "%s\n", json_object_to_json_string_ext(keyboardjson, JSON_C_TO_STRING_PRETTY));
+
     return True;
 }

@@ -69,6 +69,7 @@ typedef struct _XKBPrintArgs {
     Bool		group2Color; // color 2nd group blue
     Bool		altNames;
     Bool		simplifyKeysyms;
+    Bool		doodads;
 } XKBPrintArgs;
 
 extern Bool
