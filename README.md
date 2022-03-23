@@ -3,6 +3,8 @@
 xkbprint-kle is a program that converts the XKB Geometry section of a keyboard configuration to a http://keyboard-layout-editor.com JSON file.
 xkbprint-kle is a fork of xkbprint (https://gitlab.freedesktop.org/xorg/app/xkbprint).
 
+[Here's a comparison between xkbprint and xkbprint-kle](https://imgur.com/a/rdvx7u2)
+
 ### What is XKB geometry? Can I convent my XModMap layout to JSON?
 
 On Linux, XKB handles keyboards and keyboard configuration under X11 and Wayland.
@@ -20,10 +22,9 @@ If you have a custom XKB configuration, but no custom geometry, xkbprint-kle wil
 
 Planned support:
 - Doodads (partially done, shape and outline doodads use the bounding box of that shape)
-- Irregularly shaped keys (a bounding box of the key is made at the moment)
+- Irregularly shaped keys (uses a bounding box like dododads)
 - Outputting only a specific group
 - Starting from a layer other than 1
-- Options for key style
 
 If your keyboard layout has any of the following, please open an issue, preferably with your XKB geometry or configuration.
 I probably won't add support otherwise.
