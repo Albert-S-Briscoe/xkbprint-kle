@@ -21,17 +21,18 @@ If you have a custom XKB configuration, but no custom geometry, xkbprint-kle wil
 ## Unsupported parts of XKB
 
 Planned support:
+- Keyboard-layout-editor to XKB (geometry and keysyms/key function)
 - Doodads (partially done, shape and outline doodads use the bounding box of that shape)
 - Irregularly shaped keys (uses a bounding box like dododads)
-- Outputting only a specific group
-- Starting from a layer other than 1
 
 If your keyboard layout has any of the following, please open an issue, preferably with your XKB geometry or configuration.
 I probably won't add support otherwise.
 - Vertical rows
 - Rotated sections
 - Keys with multiple colors on the same key
-- Keys that are more complicated than an ISO or big-ass enter
+- Keys that are more complicated than a big-ass enter or ISO enter
+- Outputting only a specific group
+- Starting from a layer other than 1
 
 ## Compiling
 ```
